@@ -10,7 +10,6 @@ import qualified Data.Map as M
 import           Lamdu.Expr.Pure (($$), ($$:), ($=), ($.))
 import qualified Lamdu.Expr.Pure as P
 import           Lamdu.Expr.Type ((~>), Type(..), Composite(..))
-import qualified Lamdu.Expr.Type as T
 import           Lamdu.Expr.Val (Val(..))
 import qualified Lamdu.Expr.Val as V
 import           Lamdu.Expr.Val.Arbitrary ()
@@ -39,22 +38,22 @@ exps =
 
     , eLet "id" (lambda "x" (\x -> eLet "y" x id)) $ \id' -> id' $$ id'
 
-    , eLet "id" (lambda "x" (\x -> eLet "y" x id)) $ \id' -> id' $$ id' $$ P.litInt 2
+    , eLet "id" (lambda "x" (\x -> eLet "y" x id)) $ \id' -> id' $$ id' $$ litInt 2
 
     , eLet "id" (lambda "x" (\x -> x $$ x)) id
 
     , lambda "m" $ \m ->
         eLet "y" m $ \y ->
-        eLet "x" (y $$ P.litInt 3) id
+        eLet "x" (y $$ litInt 3) id
 
-    , P.litInt 2 $$ P.litInt 2
+    , litInt 2 $$ litInt 2
 
     , lambda "a" $ \a ->
         eLet "x"
         ( lambda "b"
-            ( \_ -> eLet "y" (lambda "c" (\_ -> a $$ P.litInt 1))
-                (\y -> y $$ P.litInt 2) )
-        ) $ \x -> x $$ P.litInt 3
+            ( \_ -> eLet "y" (lambda "c" (\_ -> a $$ litInt 1))
+                (\y -> y $$ litInt 2) )
+        ) $ \x -> x $$ litInt 3
 
     , lambda "a" $ \a -> lambda "b" $ \b -> b $$ (a $$ (a $$ b))
 
@@ -63,20 +62,20 @@ exps =
         "newY" $= (vec $. "y") $
         P.recEmpty
 
-    , eLet "vec" ("x" $= P.litInt 5 $ "y" $= P.litInt 7 $ P.recEmpty) ($. "x")
+    , eLet "vec" ("x" $= litInt 5 $ "y" $= litInt 7 $ P.recEmpty) ($. "x")
 
-    , eLet "vec" ("x" $= P.litInt 5 $ "y" $= P.litInt 7 $ P.recEmpty) ($. "z")
+    , eLet "vec" ("x" $= litInt 5 $ "y" $= litInt 7 $ P.recEmpty) ($. "z")
 
     , lambda "x" $ \x -> "prev" $= (x $. "cur") $ x
 
-    , "x" $= P.litInt 2 $ "x" $= P.litInt 3 $ P.recEmpty
+    , "x" $= litInt 2 $ "x" $= litInt 3 $ P.recEmpty
 
-    , lambda "r" ("x" $= P.litInt 2) $$ ("x" $= P.litInt 3) P.recEmpty
+    , lambda "r" ("x" $= litInt 2) $$ ("x" $= litInt 3) P.recEmpty
 
-    , eLet "f" (lambda "r" ("x" $= P.litInt 3)) $
-        \f -> f $$ ("x" $= P.litInt 2) P.recEmpty
+    , eLet "f" (lambda "r" ("x" $= litInt 3)) $
+        \f -> f $$ ("x" $= litInt 2) P.recEmpty
 
-    , "x" $= P.litInt 1 $ P.hole
+    , "x" $= litInt 1 $ P.hole
 
     , lambda "x" $ \x -> list [x, x]
 
@@ -86,13 +85,13 @@ exps =
         ( lambda "x" $ \x ->
             eLet "y" (x $. "x") $
             \_y -> x ) $ \open ->
-        open $$ ("x" $= P.litInt 0 $ P.recEmpty)
+        open $$ ("x" $= litInt 0 $ P.recEmpty)
 
     , P.global "fix" $$ lambda "f"
         ( \f -> P.hole $$ (f $$ (f $$ (P.global "zipWith" $$ P.hole $$ P.hole $$ P.hole)))
         )
 
-    , list [P.inject "x" (P.litInt 1), P.inject "y" (P.litInt 2), P.inject "x" P.hole]
+    , list [P.inject "x" (litInt 1), P.inject "y" (litInt 2), P.inject "x" P.hole]
     , P.absurd
 
     , --maybe:
@@ -102,8 +101,8 @@ exps =
       P._case "Just" justHandler $
       P.absurd
 
-    , "a" $= (P.global "maybe" $$ P.litInt 0 $$ P.global "plus1" $$ (P.global "Just" $$ P.litInt 1)) $
-      "b" $= (P.global "maybe" $$ P.litInt 0 $$ P.global "plus1" $$ P.global "Nothing") $
+    , "a" $= (P.global "maybe" $$ litInt 0 $$ P.global "plus1" $$ (P.global "Just" $$ litInt 1)) $
+      "b" $= (P.global "maybe" $$ litInt 0 $$ P.global "plus1" $$ P.global "Nothing") $
       P.recEmpty
 
     , nullTest
@@ -166,7 +165,7 @@ unifies =
           CEmpty
         ) ~> TVar "e"
       , ( TRecord $
-          CExtend "x" T.TInt $
+          CExtend "x" intType $
           CExtend "y" (TVar "a") $
           CExtend "z" (TVar "a") $
           CVar "r"

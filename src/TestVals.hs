@@ -7,6 +7,7 @@ module TestVals
     , factorsVal
     , lambda, lambdaRecord, letItem, recordType
     , eLet
+    , litInt, intType
     , listTypePair, boolTypePair, polyIdTypePair, unsafeCoerceTypePair
     , ignoredParamTypePair
     , xGetterPair, xGetterPairConstrained

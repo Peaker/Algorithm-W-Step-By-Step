@@ -76,8 +76,7 @@ arbitraryLeaf :: GenExpr V.Leaf
 arbitraryLeaf = do
     Env locals globals <- Reader.ask
     join . liftGen . Gen.elements $
-        [ V.LLiteralInteger <$> liftGen arbitrary
-        , pure V.LHole
+        [ pure V.LHole
         , pure V.LRecEmpty
         , pure V.LAbsurd
         ] ++

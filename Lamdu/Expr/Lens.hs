@@ -305,7 +305,7 @@ subExprPayloads :: Lens.IndexedTraversal (Val ()) (Val a) (Val b) a b
 subExprPayloads f val@(Val pl body) =
     Val
     <$> Lens.indexed f (void val) pl
-    <*> (body & Lens.traversed .> subExprPayloads %%~ f)
+    <*> (Lens.traversed .> subExprPayloads) f body
 
 {-# INLINE subExprs #-}
 subExprs :: Lens.Fold (Val a) (Val a)

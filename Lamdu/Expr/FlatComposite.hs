@@ -3,6 +3,7 @@ module Lamdu.Expr.FlatComposite
     ( FlatComposite(..)
     , fromComposite
     , toComposite
+    , fields
     ) where
 
 import           Prelude.Compat

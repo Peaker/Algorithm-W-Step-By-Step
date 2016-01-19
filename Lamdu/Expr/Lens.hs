@@ -26,6 +26,7 @@ module Lamdu.Expr.Lens
     -- Non-leafs
     , valGetField
     , valApply
+    , valAbs
     -- Pure vals:
     , pureValBody
     , pureValApply
@@ -88,6 +89,10 @@ typeTIds f x = nextLayer (typeTIds f) x
 {-# INLINE valApply #-}
 valApply :: Traversal' (Val a) (V.Apply (Val a))
 valApply = V.body . _BApp
+
+{-# INLINE valAbs #-}
+valAbs :: Traversal' (Val a) (V.Lam (Val a))
+valAbs = V.body . _BAbs
 
 {-# INLINE pureValBody #-}
 pureValBody :: Iso' (Val ()) (V.Body (Val ()))

@@ -2,7 +2,7 @@
 module Lamdu.Infer
     ( makeScheme
     , TypeVars(..)
-    , Loaded(..)
+    , Loaded(..), emptyLoaded
     , infer, inferFromNom
     , Scope, emptyScope, Scope.scopeToTypeMap
     , Payload(..), plScope, plType
@@ -72,6 +72,9 @@ data Loaded = Loaded
     { loadedGlobalTypes :: Map V.GlobalId Scheme
     , loadedNominals :: Map T.NominalId Nominal
     }
+
+emptyLoaded :: Loaded
+emptyLoaded = Loaded Map.empty Map.empty
 
 inferSubst :: Loaded -> Scope -> Val a -> Infer (Scope, Val (Payload, a))
 inferSubst loaded rootScope val =

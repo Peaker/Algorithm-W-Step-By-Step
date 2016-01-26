@@ -14,7 +14,6 @@ import           Lamdu.Expr.Val (Val(..))
 import qualified Lamdu.Expr.Val as V
 import           Lamdu.Expr.Val.Arbitrary ()
 import           Lamdu.Infer
-import qualified Lamdu.Infer.Recursive as Recursive
 import           Lamdu.Infer.Unify
 import qualified Lamdu.Infer.Update as Update
 import qualified Test.Framework as TestFramework
@@ -136,13 +135,6 @@ recurseVar = V.Var "Recurse"
 recurse :: V.Val ()
 recurse = P.var recurseVar
 
-recursiveExps :: [Val ()]
-recursiveExps =
-    [ eLet "id" (lambda "x" id) id
-    , recurse
-    , foldrTest
-    ]
-
 foldrTest :: Val ()
 foldrTest =
     lambda "nil" $ \nil ->
@@ -210,13 +202,6 @@ inferInto pl val =
         unify inferredType (pl ^. plType)
         (,) <$> Update.update inferredType <*> Update.inferredVal inferredVal & Update.liftInfer
 
-testRecursive :: Val () -> IO ()
-testRecursive e =
-    runAndPrint e $
-    do
-        recursivePos <- Recursive.inferEnv recurseVar emptyScope
-        inferInto recursivePos e
-
 testUnify :: Type -> Type -> IO ()
 testUnify x y =
     do
@@ -238,8 +223,6 @@ main =
     do
         putStrLn "Expression types:"
         mapM_ test exps
-        putStrLn "Recursive expression types:"
-        mapM_ testRecursive recursiveExps
         putStrLn "Unify:"
         mapM_ (uncurry testUnify) unifies
         TestFramework.defaultMain [testProperty "alphaEq self" prop_alphaEq]

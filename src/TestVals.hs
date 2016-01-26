@@ -195,7 +195,7 @@ infixArgs l r = P.record [("l", l), ("r", r)]
 env :: Loaded
 env =
     Loaded
-    { loadedGlobalTypes =
+    { _loadedGlobalTypes =
         Map.fromList
         [ ("fix",    forAll ["a"] $ \ [a] -> (a ~> a) ~> a)
         , ("if",     forAll ["a"] $ \ [a] -> recordType [("condition", boolType), ("then", a), ("else", a)] ~> a)
@@ -228,7 +228,7 @@ env =
         , ("True",   forAll [] $ \ [] -> boolType)
         , ("False",  forAll [] $ \ [] -> boolType)
         ]
-    , loadedNominals =
+    , _loadedNominals =
         Map.fromList
         [ listTypePair
         , boolTypePair

@@ -28,7 +28,6 @@ library
                      , Lamdu.Expr.TypeVars
                      , Lamdu.Expr.Val
                      , Lamdu.Infer
-                     , Lamdu.Infer.Recursive
                      , Lamdu.Infer.Error
                      , Lamdu.Infer.Load
                      , Lamdu.Infer.Unify

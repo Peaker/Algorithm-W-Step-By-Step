@@ -12,7 +12,6 @@ module Lamdu.Expr.Val
     , Nom(..), nomId, nomVal
     , Val(..), body, payload, alphaEq
     , Var(..)
-    , GlobalId(..)
     , pPrintUnannotated
     ) where
 
@@ -43,9 +42,6 @@ import           Text.PrettyPrint.HughesPJClass.Compat (Pretty(..), PrettyLevel,
 newtype Var = Var { vvName :: Identifier }
     deriving (Eq, Ord, Show, NFData, IsString, Pretty, Binary, Hashable)
 
-newtype GlobalId = GlobalId { globalId :: Identifier }
-    deriving (Eq, Ord, Show, NFData, IsString, Pretty, Binary, Hashable)
-
 data Literal = Literal
     { _litType :: {-# UNPACK #-} !T.PrimId
     , _litData :: {-# UNPACK #-} !ByteString
@@ -62,7 +58,6 @@ litData f Literal{..} = f _litData <&> \_litData -> Literal{..}
 
 data Leaf
     =  LVar {-# UNPACK #-}!Var
-    |  LGlobal {-# UNPACK #-}!GlobalId
     |  LHole
     |  LLiteral {-# UNPACK #-} !Literal
     |  LRecEmpty
@@ -239,7 +234,6 @@ pPrintPrecBody :: Pretty pl => PrettyLevel -> Rational -> Body (Val pl) -> PP.Do
 pPrintPrecBody lvl prec b =
     case b of
     BLeaf (LVar var)          -> pPrint var
-    BLeaf (LGlobal tag)       -> pPrint tag
     BLeaf (LLiteral (Literal _p d)) -> PP.text (BS8.unpack d)
     BLeaf LHole               -> PP.text "?"
     BLeaf LAbsurd             -> PP.text "absurd"

@@ -1,8 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, RankNTypes, NoMonomorphismRestriction, FlexibleContexts #-}
 module Lamdu.Expr.Lens
     -- ValLeaf prisms:
-    ( _LGlobal
-    , _LHole
+    ( _LHole
     , _LRecEmpty
     , _LAbsurd
     , _LVar
@@ -17,7 +16,6 @@ module Lamdu.Expr.Lens
     , _BInject
     , _BFromNom, _BToNom
     -- Leafs
-    , valGlobal  , valBodyGlobal
     , valHole    , valBodyHole
     , valVar     , valBodyVar
     , valRecEmpty, valBodyRecEmpty
@@ -53,16 +51,18 @@ module Lamdu.Expr.Lens
     , typeTIds
     ) where
 
-import           Prelude.Compat
-
 import           Control.Lens (Traversal', Prism', prism', Iso', iso)
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
 import           Control.Monad (void)
+import           Data.Set (Set)
+import qualified Data.Set as Set
 import           Lamdu.Expr.Type (Type)
 import qualified Lamdu.Expr.Type as T
 import           Lamdu.Expr.Val (Val(..))
 import qualified Lamdu.Expr.Val as V
+
+import           Prelude.Compat
 
 {-# INLINE compositeTypes #-}
 compositeTypes :: Lens.Traversal' (T.Composite p) Type
@@ -102,10 +102,6 @@ pureValBody = iso V._valBody (Val ())
 pureValApply :: Prism' (Val ()) (V.Apply (Val ()))
 pureValApply = pureValBody . _BApp
 
-{-# INLINE valGlobal #-}
-valGlobal :: Traversal' (Val a) V.GlobalId
-valGlobal = V.body . valBodyGlobal
-
 {-# INLINE valHole #-}
 valHole :: Traversal' (Val a) ()
 valHole = V.body . valBodyHole
@@ -125,13 +121,6 @@ valLiteral = V.body . valBodyLiteral
 {-# INLINE valGetField #-}
 valGetField  :: Traversal' (Val a) (V.GetField (Val a))
 valGetField = V.body . _BGetField
-
-{-# INLINE _LGlobal #-}
-_LGlobal :: Prism' V.Leaf V.GlobalId
-_LGlobal = prism' V.LGlobal get
-    where
-        get (V.LGlobal gid) = Just gid
-        get _ = Nothing
 
 {-# INLINE _LHole #-}
 _LHole :: Prism' V.Leaf ()
@@ -231,10 +220,6 @@ _BCase = prism' V.BCase get
     where
         get (V.BCase x) = Just x
         get _ = Nothing
-
-{-# INLINE valBodyGlobal #-}
-valBodyGlobal :: Prism' (V.Body e) V.GlobalId
-valBodyGlobal = _BLeaf . _LGlobal
 
 {-# INLINE valBodyHole #-}
 valBodyHole :: Prism' (V.Body expr) ()
@@ -370,8 +355,17 @@ valTags :: Lens.Traversal' (Val a) T.Tag
 valTags f = V.body $ biTraverseBodyTags f (valTags f)
 
 {-# INLINE valGlobals #-}
-valGlobals :: Lens.Traversal' (Val a) V.GlobalId
-valGlobals = valLeafs . _LGlobal
+valGlobals :: Set V.Var -> Lens.Fold (Val a) V.Var
+valGlobals scope f (Val pl body) =
+    case body of
+    V.BLeaf (V.LVar v)
+        | Set.member v scope -> V.LVar v & V.BLeaf & pure
+        | otherwise -> f v <&> V.LVar <&> V.BLeaf
+    V.BAbs (V.Lam var lamBody) ->
+        valGlobals (Set.insert var scope) f lamBody
+        <&> V.Lam var <&> V.BAbs
+    _ -> body & Lens.traverse . valGlobals scope %%~ f
+    <&> Val pl
 
 {-# INLINE valNominals #-}
 valNominals :: Lens.Traversal' (Val a) T.NominalId

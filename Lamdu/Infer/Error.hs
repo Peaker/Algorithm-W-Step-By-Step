@@ -13,7 +13,6 @@ import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 data Error
     = DuplicateField T.Tag T.Product
     | DuplicateAlt T.Tag T.Sum
-    | MissingGlobal V.GlobalId
     | MissingNominal T.NominalId
     | OccursCheckFail Doc Doc
     | TypesDoNotUnity Doc Doc
@@ -28,8 +27,6 @@ instance Pretty Error where
         "Field" <+> pPrint t <+> "forbidden in record" <+> pPrint r
     pPrint (DuplicateAlt t r) =
         "Alternative" <+> pPrint t <+> "forbidden in sum" <+> pPrint r
-    pPrint (MissingGlobal g) =
-        "Missing global:" <+> pPrint g
     pPrint (MissingNominal i) =
         "Missing nominal:" <+> pPrint i
     pPrint (OccursCheckFail v t) =

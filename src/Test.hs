@@ -87,8 +87,8 @@ exps =
             \_y -> x ) $ \open ->
         open $$ ("x" $= litInt 0 $ P.recEmpty)
 
-    , P.global "fix" $$ lambda "f"
-        ( \f -> P.hole $$ (f $$ (f $$ (P.global "zipWith" $$ P.hole $$ P.hole $$ P.hole)))
+    , P.var "fix" $$ lambda "f"
+        ( \f -> P.hole $$ (f $$ (f $$ (P.var "zipWith" $$ P.hole $$ P.hole $$ P.hole)))
         )
 
     , list [P.inject "x" (litInt 1), P.inject "y" (litInt 2), P.inject "x" P.hole]
@@ -101,8 +101,8 @@ exps =
       P._case "Just" justHandler $
       P.absurd
 
-    , "a" $= (P.global "maybe" $$ litInt 0 $$ P.global "plus1" $$ (P.global "Just" $$ litInt 1)) $
-      "b" $= (P.global "maybe" $$ litInt 0 $$ P.global "plus1" $$ P.global "Nothing") $
+    , "a" $= (P.var "maybe" $$ litInt 0 $$ P.var "plus1" $$ (P.var "Just" $$ litInt 1)) $
+      "b" $= (P.var "maybe" $$ litInt 0 $$ P.var "plus1" $$ P.var "Nothing") $
       P.recEmpty
 
     , nullTest
@@ -115,7 +115,7 @@ exps =
     , P.toNom (fst unsafeCoerceTypePair) (P.fromNom (fst polyIdTypePair) P.hole)
     , P.toNom (fst polyIdTypePair) (P.fromNom (fst unsafeCoerceTypePair) P.hole)
 
-    , P.toNom (fst polyIdTypePair) (P.global "plus1")
+    , P.toNom (fst polyIdTypePair) (P.var "plus1")
     , P.lambda "a" $ \a -> P.toNom (fst polyIdTypePair) (P.lambda "_" $ \_ -> a)
 
     , P.toNom (fst xGetterPair) (P.lambda "record" $ \record -> record $. "x")
@@ -125,8 +125,8 @@ exps =
 nullTest :: Val ()
 nullTest =
     lambda "list" $ \l ->
-    ( P._case "[]" (lambda "_" (const (P.global "True"))) $
-      P._case ":" (lambda "_" (const (P.global "False"))) $
+    ( P._case "[]" (lambda "_" (const (P.var "True"))) $
+      P._case ":" (lambda "_" (const (P.var "False"))) $
       P.absurd
     ) $$ P.fromNom (fst listTypePair) l
 

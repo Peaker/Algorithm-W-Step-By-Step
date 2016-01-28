@@ -69,7 +69,7 @@ instance CanSubst Payload where
         Payload (Subst.apply s typ) (Subst.apply s scope)
 
 data Loaded = Loaded
-    { loadedGlobalTypes :: Map V.GlobalId Scheme
+    { loadedGlobalTypes :: Map V.Var Scheme
     , loadedNominals :: Map T.NominalId Nominal
     }
 
@@ -124,18 +124,17 @@ freshInferredVarName = M.freshInferredVarName . Scope.skolems
 {-# ANN module ("HLint: ignore Redundant lambda" :: String) #-}
 
 {-# INLINE inferLeaf #-}
-inferLeaf :: Map V.GlobalId Scheme -> V.Leaf -> InferHandler a b
+inferLeaf :: Map V.Var Scheme -> V.Leaf -> InferHandler a b
 inferLeaf globals leaf = \_go locals ->
     case leaf of
     V.LHole -> freshInferredVar locals "h"
     V.LVar n ->
         case Scope.lookupTypeOf n locals of
-        Nothing      -> M.throwError $ Err.UnboundVariable n
-        Just t       -> return t
-    V.LGlobal n ->
-        case Map.lookup n globals of
-        Nothing      -> M.throwError $ Err.MissingGlobal n
-        Just sigma   -> Scheme.instantiate (Scope.skolems locals) sigma
+        Just t -> return t
+        Nothing ->
+            case Map.lookup n globals of
+            Just s -> Scheme.instantiate (Scope.skolems locals) s
+            Nothing -> M.throwError $ Err.UnboundVariable n
     V.LLiteral (V.Literal p _) -> return $ T.TPrim p
     V.LRecEmpty -> return $ T.TRecord T.CEmpty
     V.LAbsurd ->

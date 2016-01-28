@@ -251,32 +251,32 @@ litInt = P.lit "Int" . BS8.pack . show
 
 factorialVal :: Val ()
 factorialVal =
-    P.global "fix" $$
+    P.var "fix" $$
     lambda "loop"
     ( \loop ->
         lambda "x" $ \x ->
-        P.global "if" $$:
-        [ ( "condition", P.global "==" $$
+        P.var "if" $$:
+        [ ( "condition", P.var "==" $$
                 infixArgs x (litInt 0) )
         , ( "then", litInt 1 )
-        , ( "else", P.global "*" $$
-                infixArgs x (loop $$ (P.global "-" $$ infixArgs x (litInt 1)))
+        , ( "else", P.var "*" $$
+                infixArgs x (loop $$ (P.var "-" $$ infixArgs x (litInt 1)))
             )
         ]
     )
 
 euler1Val :: Val ()
 euler1Val =
-    P.global "sum" $$
-    ( P.global "filter" $$:
-        [ ("from", P.global ".." $$ infixArgs (litInt 1) (litInt 1000))
+    P.var "sum" $$
+    ( P.var "filter" $$:
+        [ ("from", P.var ".." $$ infixArgs (litInt 1) (litInt 1000))
         , ( "predicate",
                 lambda "x" $ \x ->
-                P.global "||" $$ infixArgs
-                ( P.global "==" $$ infixArgs
-                    (litInt 0) (P.global "%" $$ infixArgs x (litInt 3)) )
-                ( P.global "==" $$ infixArgs
-                    (litInt 0) (P.global "%" $$ infixArgs x (litInt 5)) )
+                P.var "||" $$ infixArgs
+                ( P.var "==" $$ infixArgs
+                    (litInt 0) (P.var "%" $$ infixArgs x (litInt 3)) )
+                ( P.var "==" $$ infixArgs
+                    (litInt 0) (P.var "%" $$ infixArgs x (litInt 5)) )
             )
         ]
     )
@@ -284,31 +284,31 @@ euler1Val =
 solveDepressedQuarticVal :: Val ()
 solveDepressedQuarticVal =
     lambdaRecord ["e", "d", "c"] $ \[e, d, c] ->
-    letItem "solvePoly" (P.global "id")
+    letItem "solvePoly" (P.var "id")
     $ \solvePoly ->
     letItem "sqrts"
     ( lambda "x" $ \x ->
         letItem "r"
-        ( P.global "sqrt" $$ x
+        ( P.var "sqrt" $$ x
         ) $ \r ->
-        list [r, P.global "negate" $$ r]
+        list [r, P.var "negate" $$ r]
     )
     $ \sqrts ->
-    P.global "if" $$:
-    [ ("condition", P.global "==" $$ infixArgs d (litInt 0))
+    P.var "if" $$:
+    [ ("condition", P.var "==" $$ infixArgs d (litInt 0))
     , ( "then",
-            P.global "concat" $$
-            ( P.global "map" $$:
+            P.var "concat" $$
+            ( P.var "map" $$:
                 [ ("list", solvePoly $$ list [e, c, litInt 1])
                 , ("mapping", sqrts)
                 ]
             )
         )
     , ( "else",
-            P.global "concat" $$
-            ( P.global "map" $$:
-                [ ( "list", sqrts $$ (P.global "head" $$ (solvePoly $$ list
-                        [ P.global "negate" $$ (d %* d)
+            P.var "concat" $$
+            ( P.var "map" $$:
+                [ ( "list", sqrts $$ (P.var "head" $$ (solvePoly $$ list
+                        [ P.var "negate" $$ (d %* d)
                         , (c %* c) %- (litInt 4 %* e)
                         , litInt 2 %* c
                         , litInt 1
@@ -332,8 +332,8 @@ solveDepressedQuarticVal =
         (%*) = inf "*"
         (%/) = inf "/"
 
-inf :: V.GlobalId -> Val () -> Val () -> Val ()
-inf str x y = P.global str $$ infixArgs x y
+inf :: V.Var -> Val () -> Val () -> Val ()
+inf str x y = P.var str $$ infixArgs x y
 
 factorsVal :: Val ()
 factorsVal =
@@ -344,7 +344,7 @@ factorsVal =
     (cons m $ loop $$: [("n", n %// m), ("min", m)]) $
     loop $$: [ ("n", n), ("min", m %+ litInt 1) ]
     where
-        fix_ f = P.global "fix" $$ lambda "loop" f
+        fix_ f = P.var "fix" $$ lambda "loop" f
         if_ b t f =
             ( nullaryCase "False" f $
               nullaryCase "True" t $

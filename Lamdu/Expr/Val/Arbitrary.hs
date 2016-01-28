@@ -30,7 +30,7 @@ import qualified Test.QuickCheck.Gen as Gen
 
 data Env = Env
     { _envScope :: [V.Var]
-    , __envGlobals :: Map V.GlobalId Scheme
+    , __envGlobals :: Map V.Var Scheme
     }
 envScope :: Lens' Env [V.Var]
 envScope f e = mkEnv <$> f (_envScope e)
@@ -81,7 +81,7 @@ arbitraryLeaf = do
         , pure V.LAbsurd
         ] ++
         map (pure . V.LVar) locals ++
-        map (pure . V.LGlobal) (Map.keys globals)
+        map (pure . V.LVar) (Map.keys globals)
 
 arbitraryBody :: Arbitrary a => GenExpr (V.Body (Val a))
 arbitraryBody =
@@ -105,7 +105,7 @@ arbitraryExpr = Val <$> liftGen arbitrary <*> arbitraryBody
 class Name n where
     names :: [n]
 
-exprGen :: Arbitrary a => Map V.GlobalId Scheme -> Gen (Val a)
+exprGen :: Arbitrary a => Map V.Var Scheme -> Gen (Val a)
 exprGen globals =
     (`evalStateT` names) .
     (`runReaderT` Env [] globals) $

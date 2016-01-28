@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Lamdu.Expr.Pure
-    ( abs, var, global, lit, recEmpty, app, recExtend, getField
+    ( abs, var, lit, recEmpty, app, recExtend, getField
     , inject, absurd, _case
     , fromNom, toNom
     , leaf, hole
@@ -25,9 +25,6 @@ leaf = Val mempty . V.BLeaf
 
 var :: Monoid a => V.Var -> Val a
 var = leaf . V.LVar
-
-global :: Monoid a => V.GlobalId -> Val a
-global = leaf . V.LGlobal
 
 lit :: Monoid a => T.PrimId -> ByteString -> Val a
 lit p d = leaf $ V.LLiteral $ V.Literal p d

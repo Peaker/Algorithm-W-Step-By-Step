@@ -4,7 +4,7 @@ module Lamdu.Infer
     , TypeVars(..)
     , Loaded(..), emptyLoaded
     , infer, inferFromNom
-    , Scope, emptyScope, Scope.scopeToTypeMap
+    , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf
     , Payload(..), plScope, plType
     , M.Context, M.initialContext
     , M.InferCtx(..), M.inferCtx, Infer

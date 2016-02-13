@@ -37,7 +37,7 @@ import           Text.PrettyPrint ((<+>), (<>))
 import qualified Text.PrettyPrint as PP
 import           Text.PrettyPrint.HughesPJClass.Compat (Pretty(..), PrettyLevel, maybeParens)
 
-{-# ANN module "HLint: ignore Use const" #-}
+{-# ANN module ("HLint: ignore Use const"::String) #-}
 
 newtype Var = Var { vvName :: Identifier }
     deriving (Eq, Ord, Show, NFData, IsString, Pretty, Binary, Hashable)

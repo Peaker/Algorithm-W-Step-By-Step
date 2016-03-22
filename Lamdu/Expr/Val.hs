@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, DeriveGeneric, DeriveFunctor, DeriveFoldable, DeriveTraversable, GeneralizedNewtypeDeriving, RecordWildCards #-}
 module Lamdu.Expr.Val
     ( Leaf(..)
-    , Literal(..), litType, litData
+    , PrimVal(..), primType, primData
     , Body(..)
     , Apply(..), applyFunc, applyArg
     , GetField(..), getFieldRecord, getFieldTag
@@ -42,24 +42,24 @@ import           Text.PrettyPrint.HughesPJClass.Compat (Pretty(..), PrettyLevel,
 newtype Var = Var { vvName :: Identifier }
     deriving (Eq, Ord, Show, NFData, IsString, Pretty, Binary, Hashable)
 
-data Literal = Literal
-    { _litType :: {-# UNPACK #-} !T.PrimId
-    , _litData :: {-# UNPACK #-} !ByteString
+data PrimVal = PrimVal
+    { _primType :: {-# UNPACK #-} !T.PrimId
+    , _primData :: {-# UNPACK #-} !ByteString
     } deriving (Generic, Show, Eq, Ord)
-instance NFData Literal where rnf = genericRnf
-instance Binary Literal
-instance Hashable Literal where hashWithSalt = gHashWithSalt
+instance NFData PrimVal where rnf = genericRnf
+instance Binary PrimVal
+instance Hashable PrimVal where hashWithSalt = gHashWithSalt
 
-litType :: Lens' Literal T.PrimId
-litType f Literal{..} = f _litType <&> \_litType -> Literal{..}
+primType :: Lens' PrimVal T.PrimId
+primType f PrimVal{..} = f _primType <&> \_primType -> PrimVal{..}
 
-litData :: Lens' Literal ByteString
-litData f Literal{..} = f _litData <&> \_litData -> Literal{..}
+primData :: Lens' PrimVal ByteString
+primData f PrimVal{..} = f _primData <&> \_primData -> PrimVal{..}
 
 data Leaf
     =  LVar {-# UNPACK #-}!Var
     |  LHole
-    |  LLiteral {-# UNPACK #-} !Literal
+    |  LLiteral {-# UNPACK #-} !PrimVal
     |  LRecEmpty
     |  LAbsurd
     deriving (Generic, Show, Eq)
@@ -234,7 +234,7 @@ pPrintPrecBody :: Pretty pl => PrettyLevel -> Rational -> Body (Val pl) -> PP.Do
 pPrintPrecBody lvl prec b =
     case b of
     BLeaf (LVar var)          -> pPrint var
-    BLeaf (LLiteral (Literal _p d)) -> PP.text (BS8.unpack d)
+    BLeaf (LLiteral (PrimVal _p d)) -> PP.text (BS8.unpack d)
     BLeaf LHole               -> PP.text "?"
     BLeaf LAbsurd             -> PP.text "absurd"
     BApp (Apply e1 e2)        -> maybeParens (10 < prec) $

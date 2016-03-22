@@ -115,7 +115,7 @@ valRecEmpty :: Traversal' (Val a) ()
 valRecEmpty = V.body . valBodyRecEmpty
 
 {-# INLINE valLiteral #-}
-valLiteral :: Traversal' (Val a) V.Literal
+valLiteral :: Traversal' (Val a) V.PrimVal
 valLiteral = V.body . valBodyLiteral
 
 {-# INLINE valGetField #-}
@@ -151,7 +151,7 @@ _LVar = prism' V.LVar get
         get _ = Nothing
 
 {-# INLINE _LLiteral #-}
-_LLiteral :: Prism' V.Leaf V.Literal
+_LLiteral :: Prism' V.Leaf V.PrimVal
 _LLiteral = prism' V.LLiteral get
     where
         get (V.LLiteral i) = Just i
@@ -234,7 +234,7 @@ valBodyRecEmpty :: Prism' (V.Body expr) ()
 valBodyRecEmpty = _BLeaf . _LRecEmpty
 
 {-# INLINE valBodyLiteral #-}
-valBodyLiteral :: Prism' (V.Body expr) V.Literal
+valBodyLiteral :: Prism' (V.Body expr) V.PrimVal
 valBodyLiteral = _BLeaf . _LLiteral
 
 {-# INLINE valLeafs #-}

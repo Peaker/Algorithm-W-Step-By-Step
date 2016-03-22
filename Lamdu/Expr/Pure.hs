@@ -27,7 +27,7 @@ var :: Monoid a => V.Var -> Val a
 var = leaf . V.LVar
 
 lit :: Monoid a => T.PrimId -> ByteString -> Val a
-lit p d = leaf $ V.LLiteral $ V.Literal p d
+lit p d = leaf $ V.LLiteral $ V.PrimVal p d
 
 recEmpty :: Monoid a => Val a
 recEmpty = Val mempty $ V.BLeaf V.LRecEmpty

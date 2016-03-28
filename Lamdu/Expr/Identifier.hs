@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, DeriveGeneric, GeneralizedNewtypeDeriving #-}
 module Lamdu.Expr.Identifier
-    ( Identifier(..)
+    ( Identifier(..), identHex
     ) where
 
 import           Prelude.Compat
@@ -10,6 +10,7 @@ import           Control.DeepSeq.Generics (genericRnf)
 import           Data.Binary (Binary)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
+import           Data.ByteString.Hex (showHexBytes)
 import           Data.Hashable (Hashable)
 import           Data.String (IsString(..))
 import           GHC.Generics (Generic)
@@ -21,3 +22,6 @@ newtype Identifier = Identifier ByteString
 instance NFData Identifier    where rnf = genericRnf
 instance IsString Identifier  where fromString = Identifier . fromString
 instance Pretty Identifier    where pPrint (Identifier x) = PP.text $ BS.unpack x
+
+identHex :: Identifier -> String
+identHex (Identifier bs) = showHexBytes bs

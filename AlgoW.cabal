@@ -38,6 +38,7 @@ library
                      , Lamdu.Infer.Internal.Scope
                      , Lamdu.Infer.Internal.Subst
                      , Lamdu.Infer.Internal.Unify
+                     , Data.ByteString.Hex
                      , Data.Hashable.Generic
                      , Data.Map.Utils
                      , Text.PrettyPrint.HughesPJClass.Compat

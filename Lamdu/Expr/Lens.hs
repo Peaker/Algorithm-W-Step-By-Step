@@ -43,6 +43,7 @@ module Lamdu.Expr.Lens
     , _TRecord
     , _TSum
     , _TFun
+    , _TInst
     -- Composite prisms:
     , _CVar
     -- Type traversals:
@@ -55,6 +56,7 @@ import           Control.Lens (Traversal', Prism', prism', Iso', iso)
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
 import           Control.Monad (void)
+import           Data.Map (Map)
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Lamdu.Expr.Type (Type)
@@ -270,6 +272,13 @@ _TFun :: Prism' Type (Type, Type)
 _TFun = prism' (uncurry T.TFun) get
     where
         get (T.TFun arg res) = Just (arg, res)
+        get _ = Nothing
+
+{-# INLINE _TInst #-}
+_TInst :: Prism' Type (T.NominalId, Map T.ParamId Type)
+_TInst = prism' (uncurry T.TInst) get
+    where
+        get (T.TInst nomId params) = Just (nomId, params)
         get _ = Nothing
 
 {-# INLINE _CVar #-}

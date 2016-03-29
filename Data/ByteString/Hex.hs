@@ -3,7 +3,7 @@ module Data.ByteString.Hex
     , showHexBytes
     , parseHexDigit
     , parseHexByte
-    , parseHexDigits
+    , parseHexBytes
     ) where
 
 import           Control.Lens.Operators
@@ -39,6 +39,6 @@ parseHexByte [x,y] =
 parseHexByte other =
     Left $ unwords ["Expecting two hex digits, found", show (length other), "characters"]
 
-parseHexDigits :: String -> Either String SBS.ByteString
-parseHexDigits str =
+parseHexBytes :: String -> Either String SBS.ByteString
+parseHexBytes str =
     chunks 2 str >>= mapM parseHexByte <&> SBS.pack

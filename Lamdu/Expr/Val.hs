@@ -43,14 +43,14 @@ newtype Var = Var { vvName :: Identifier }
     deriving (Eq, Ord, Show, NFData, IsString, Pretty, Binary, Hashable)
 
 data PrimVal = PrimVal
-    { _primType :: {-# UNPACK #-} !T.PrimId
+    { _primType :: {-# UNPACK #-} !T.NominalId
     , _primData :: {-# UNPACK #-} !ByteString
     } deriving (Generic, Show, Eq, Ord)
 instance NFData PrimVal where rnf = genericRnf
 instance Binary PrimVal
 instance Hashable PrimVal where hashWithSalt = gHashWithSalt
 
-primType :: Lens' PrimVal T.PrimId
+primType :: Lens' PrimVal T.NominalId
 primType f PrimVal{..} = f _primType <&> \_primType -> PrimVal{..}
 
 primData :: Lens' PrimVal ByteString

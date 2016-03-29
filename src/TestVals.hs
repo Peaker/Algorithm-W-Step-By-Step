@@ -88,7 +88,7 @@ boolType :: Type
 boolType = T.TInst (fst boolTypePair) Map.empty
 
 intType :: Type
-intType = T.TPrim "Int"
+intType = T.TInst "Int" Map.empty
 
 boolTypePair :: (T.NominalId, Nominal)
 boolTypePair =

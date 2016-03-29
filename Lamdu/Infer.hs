@@ -135,7 +135,7 @@ inferLeaf globals leaf = \_go locals ->
             case Map.lookup n globals of
             Just s -> Scheme.instantiate (Scope.skolems locals) s
             Nothing -> M.throwError $ Err.UnboundVariable n
-    V.LLiteral (V.PrimVal p _) -> return $ T.TPrim p
+    V.LLiteral (V.PrimVal p _) -> return $ T.TInst p Map.empty
     V.LRecEmpty -> return $ T.TRecord T.CEmpty
     V.LAbsurd ->
         do

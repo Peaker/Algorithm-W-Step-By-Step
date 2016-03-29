@@ -71,7 +71,6 @@ instance Free Type where
     free (T.TFun t1 t2)  =  free t1 <> free t2
     free (T.TRecord r)   =  free r
     free (T.TSum s)      =  free s
-    free T.TPrim{}       =  mempty
 
 instance CompositeVarKind p => Free (T.Composite p) where
     free T.CEmpty          = mempty

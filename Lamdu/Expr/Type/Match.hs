@@ -21,7 +21,6 @@ matchVars (TInst i0 params0) (TInst i1 params1)
     | i0 == i1 =
         MapUtils.match matchVars params0 params1
         <&> Map.elems >>= sequence <&> mconcat
-matchVars (TPrim p0)         (TPrim p1) | p0 == p1 = Just mempty
 matchVars (TRecord c0) (TRecord c1) =
     matchCompositeVars (\x -> ([], x, [])) c0 c1
 matchVars (TSum c0) (TSum c1) =

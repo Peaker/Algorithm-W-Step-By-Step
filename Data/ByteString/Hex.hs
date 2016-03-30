@@ -13,7 +13,7 @@ import           Data.Word (Word8)
 import           Text.Printf (printf)
 
 showHexByte :: Word8 -> String
-showHexByte = printf "%02X"
+showHexByte = printf "%02x"
 
 showHexBytes :: SBS.ByteString -> String
 showHexBytes = concatMap showHexByte . SBS.unpack

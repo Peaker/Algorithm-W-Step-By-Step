@@ -21,7 +21,7 @@ import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import qualified Data.Set as Set
 import           Lamdu.Expr.Constraints (Constraints(..), CompositeVarConstraints(..))
-import           Lamdu.Expr.Nominal (Nominal(..))
+import           Lamdu.Expr.Nominal (Nominal(..), NominalType(..))
 import           Lamdu.Expr.Pure (($$), ($$:))
 import qualified Lamdu.Expr.Pure as P
 import           Lamdu.Expr.Scheme (Scheme(..))
@@ -69,12 +69,13 @@ listTypePair =
     ( "List"
     , Nominal
         { nParams = Map.singleton "elem" tvName
-        , nScheme =
+        , nType =
             T.CEmpty
             & T.CExtend "[]" (recordType [])
             & T.CExtend ":" (recordType [("head", tv), ("tail", listOf tv)])
             & T.TSum
             & Scheme.mono
+            & NominalType
         }
     )
     where
@@ -95,12 +96,13 @@ boolTypePair =
     ( "Bool"
     , Nominal
         { nParams = Map.empty
-        , nScheme =
+        , nType =
             T.CEmpty
             & T.CExtend "True" (recordType [])
             & T.CExtend "False" (recordType [])
             & T.TSum
             & Scheme.mono
+            & NominalType
         }
     )
 
@@ -121,8 +123,8 @@ polyIdTypePair =
     ( "PolyIdentity"
     , Nominal
         { nParams = Map.empty
-        , nScheme =
-            Scheme (TV.singleton tvA) mempty $
+        , nType =
+            NominalType $ Scheme (TV.singleton tvA) mempty $
             ta ~> ta
         }
     )
@@ -132,8 +134,8 @@ unsafeCoerceTypePair =
     ( "UnsafeCoerce"
     , Nominal
         { nParams = Map.empty
-        , nScheme =
-            Scheme (TV.singleton tvA <> TV.singleton tvB) mempty $
+        , nType =
+            NominalType $ Scheme (TV.singleton tvA <> TV.singleton tvB) mempty $
             ta ~> tb
         }
     )
@@ -143,8 +145,8 @@ ignoredParamTypePair =
     ( "IgnoredParam"
     , Nominal
         { nParams = Map.singleton "res" tvB
-        , nScheme =
-            Scheme (TV.singleton tvA) mempty $
+        , nType =
+            NominalType $ Scheme (TV.singleton tvA) mempty $
             ta ~> tb
         }
     )
@@ -153,8 +155,8 @@ xGetter :: (T.ProductVar -> Constraints) -> Nominal
 xGetter constraints =
     Nominal
     { nParams = Map.empty
-    , nScheme =
-        Scheme (TV.singleton tvA <> TV.singleton tvRest) (constraints tvRest) $
+    , nType =
+        NominalType $ Scheme (TV.singleton tvA <> TV.singleton tvRest) (constraints tvRest) $
         openRecordType tvRest [("x", ta)] ~> ta
     }
     where

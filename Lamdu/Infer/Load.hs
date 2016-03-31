@@ -20,15 +20,14 @@ import           Lamdu.Infer (Scope, Infer, infer, Payload, Loaded(..), scopeToT
 
 data Loader m = Loader
     { loadTypeOf :: V.Var -> m Scheme
-    , -- loadNominal returns Nothing for opaque (builtin) types.
-      loadNominal :: T.NominalId -> m (Maybe Nominal)
+    , loadNominal :: T.NominalId -> m Nominal
     }
 
 loadVal :: Applicative m => Loader m -> Scope -> Val a -> m Loaded
 loadVal loader scope val =
     Loaded
     <$> loadMap loadTypeOf (val ^.. valGlobals (Map.keysSet (scopeToTypeMap scope)))
-    <*> (loadMap loadNominal (val ^.. valNominals) <&> Map.mapMaybe id)
+    <*> loadMap loadNominal (val ^.. valNominals)
     where
         loadMap f x = x & Set.fromList & Map.fromSet (f loader) & Traversable.sequenceA
 

@@ -25,7 +25,7 @@ import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import           Data.Typeable (Typeable)
 import           GHC.Generics (Generic)
-import           Lamdu.Expr.Nominal (Nominal(..))
+import           Lamdu.Expr.Nominal (Nominal(..), NominalType(..))
 import qualified Lamdu.Expr.Nominal as Nominal
 import           Lamdu.Expr.Scheme (Scheme)
 import           Lamdu.Expr.Type (Type)
@@ -277,7 +277,9 @@ nomTypes outerSkolemsScope nominals name =
             nParams nominal
             & Map.keysSet & Map.fromSet (const (M.freshInferredVar outerSkolemsScope "n"))
             & sequenceA
-        return (T.TInst name p1_paramVals, Nominal.apply p1_paramVals nominal)
+        case Nominal.apply p1_paramVals nominal of
+            OpaqueNominal -> Err.AccessOpaqueNominal name & M.throwError
+            NominalType scheme -> return (T.TInst name p1_paramVals, scheme)
 
 {-# INLINE inferFromNom #-}
 inferFromNom :: Map T.NominalId Nominal -> V.Nom a -> InferHandler a b

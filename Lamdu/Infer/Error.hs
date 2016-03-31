@@ -13,6 +13,7 @@ import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 data Error
     = DuplicateField T.Tag T.Product
     | DuplicateAlt T.Tag T.Sum
+    | AccessOpaqueNominal T.NominalId
     | MissingNominal T.NominalId
     | OccursCheckFail Doc Doc
     | TypesDoNotUnity Doc Doc
@@ -29,6 +30,8 @@ instance Pretty Error where
         "Alternative" <+> pPrint t <+> "forbidden in sum" <+> pPrint r
     pPrint (MissingNominal i) =
         "Missing nominal:" <+> pPrint i
+    pPrint (AccessOpaqueNominal i) =
+        "Accessing opaque nominal:" <+> pPrint i
     pPrint (OccursCheckFail v t) =
         "Occurs check fails:" <+> v <+> "vs." <+> t
     pPrint (UnboundVariable v) =

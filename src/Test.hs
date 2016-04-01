@@ -119,6 +119,9 @@ exps =
 
     , P.toNom (fst xGetterPair) (P.lambda "record" $ \record -> record $. "x")
     , P.toNom (fst xGetterPairConstrained) (P.lambda "record" $ \record -> record $. "x")
+
+    , P.toNom (fst polySTPair)
+      ((P.var "stBind") $$ infixArgs P.hole (P.lambda "var" (const P.hole)))
     ]
 
 nullTest :: Val ()

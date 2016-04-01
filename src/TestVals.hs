@@ -6,9 +6,10 @@ module TestVals
     , factorialVal, euler1Val, solveDepressedQuarticVal
     , factorsVal
     , letItem, recordType
+    , infixArgs
     , eLet
     , litInt, intType
-    , listTypePair, boolTypePair, polyIdTypePair, unsafeCoerceTypePair
+    , stTypePair, listTypePair, boolTypePair, polySTPair, polyIdTypePair, unsafeCoerceTypePair
     , ignoredParamTypePair
     , xGetterPair, xGetterPairConstrained
     ) where
@@ -55,6 +56,18 @@ recordType = T.TRecord . foldr (uncurry T.CExtend) T.CEmpty
 forAll :: [T.TypeVar] -> ([Type] -> Type) -> Scheme
 forAll tvs mkType =
     Scheme mempty { typeVars = Set.fromList tvs } mempty $ mkType $ map T.TVar tvs
+
+stTypePair :: (T.NominalId, Nominal)
+stTypePair =
+    ( "ST"
+    , Nominal
+        { nParams = Map.fromList [("res", "A"), ("s", "S")]
+        , nType = OpaqueNominal
+        }
+    )
+
+stOf :: Type -> Type -> Type
+stOf s a = T.TInst (fst stTypePair) $ Map.fromList [("res", a), ("s", s)]
 
 listTypePair :: (T.NominalId, Nominal)
 listTypePair =
@@ -120,6 +133,25 @@ polyIdTypePair =
             ta ~> ta
         }
     )
+
+polySTPair :: (T.NominalId, Nominal)
+polySTPair =
+    ( "PolyST"
+    , Nominal
+      { nParams = Map.singleton "res" tvA
+      , nType =
+          NominalType $ Scheme (TV.singleton tvS) mempty $
+          T.TInst (fst stTypePair) $ Map.fromList
+          [ ("s", T.TVar tvS)
+          , ("res", T.TVar tvRes)
+          ]
+      }
+    )
+    where
+        tvRes :: T.TypeVar
+        tvRes = "res"
+        tvS :: T.TypeVar
+        tvS = "s"
 
 unsafeCoerceTypePair :: (T.NominalId, Nominal)
 unsafeCoerceTypePair =
@@ -221,12 +253,16 @@ env =
         , ("plus1",  forAll [] $ \ [] -> intType ~> intType)
         , ("True",   forAll [] $ \ [] -> boolType)
         , ("False",  forAll [] $ \ [] -> boolType)
+
+        , ("stBind", forAll ["s", "a", "b"] $ \ [s, a, b] -> infixType (stOf s a) (a ~> stOf s b) (stOf s b))
         ]
     , loadedNominals =
         Map.fromList
-        [ listTypePair
+        [ stTypePair
+        , listTypePair
         , boolTypePair
         , polyIdTypePair
+        , polySTPair
         , unsafeCoerceTypePair
         , ignoredParamTypePair
         , xGetterPair

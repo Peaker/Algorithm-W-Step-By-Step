@@ -12,8 +12,6 @@ module Lamdu.Infer.Internal.Scope
     , insertSkolems
     ) where
 
-import           Prelude.Compat hiding (any)
-
 import           Control.DeepSeq (NFData(..))
 import           Control.DeepSeq.Generics (genericRnf)
 import qualified Control.Lens as Lens
@@ -27,9 +25,17 @@ import qualified Lamdu.Expr.TypeVars as TV
 import qualified Lamdu.Expr.Val as V
 import           Lamdu.Infer.Internal.Subst (CanSubst(..))
 import qualified Lamdu.Infer.Internal.Subst as Subst
+import           Text.PrettyPrint (($+$), (<+>), text, nest, vcat)
+import           Text.PrettyPrint.HughesPJClass (Pretty(..))
+import           Text.PrettyPrint.Utils (pPrintMap)
+
+import           Prelude.Compat hiding (any)
 
 newtype SkolemScope = SkolemScope { _skolemScopeVars :: TV.TypeVars }
     deriving (Generic, Show, Monoid, NFData, Binary)
+
+instance Pretty SkolemScope where
+    pPrint (SkolemScope tvs) = text "Skolems:" <+> pPrint tvs
 
 skolemScopeVars :: Lens.Iso' SkolemScope TV.TypeVars
 skolemScopeVars = Lens.iso _skolemScopeVars SkolemScope
@@ -46,6 +52,16 @@ data Scope = Scope
 
 instance NFData Scope where rnf = genericRnf
 instance Binary Scope
+
+instance Pretty Scope where
+    pPrint (Scope skolemScope tvTypes) =
+        text "Scope:"
+        $+$ nest 4
+        ( vcat
+          [ pPrint skolemScope
+          , pPrintMap tvTypes
+          ]
+        )
 
 instance TV.Free Scope where
     free (Scope _ env) =

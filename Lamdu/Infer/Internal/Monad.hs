@@ -23,8 +23,6 @@ module Lamdu.Infer.Internal.Monad
     , freshInferredVar, freshInferredVarName
     ) where
 
-import           Prelude.Compat
-
 import           Control.Lens (Lens')
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
@@ -49,6 +47,8 @@ import           Lamdu.Infer.Internal.Scope (SkolemScope)
 import qualified Lamdu.Infer.Internal.Scope as Scope
 import           Lamdu.Infer.Internal.Subst (Subst)
 import qualified Lamdu.Infer.Internal.Subst as Subst
+
+import           Prelude.Compat
 
 data SkolemsInScope = SkolemsInScope
     { _sisTVs  :: Map T.TypeVar    SkolemScope

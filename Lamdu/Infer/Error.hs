@@ -21,7 +21,7 @@ data Error
     | SkolemsUnified Doc Doc
     | SkolemNotPolymorphic Doc Doc
     | UnexpectedSkolemConstraint Constraints
-    | SkolemEscapesScope
+    | SkolemEscapesScope Doc Doc Doc
 
 instance Pretty Error where
     pPrint (DuplicateField t r) =
@@ -44,4 +44,6 @@ instance Pretty Error where
         "Skolem" <+> x <+> "unified with non-polymorphic type" <+> y
     pPrint (UnexpectedSkolemConstraint constraints) =
         "Unexpected constraint on skolem[s] " <+> pPrint constraints
-    pPrint SkolemEscapesScope = "Skolem escapes scope"
+    pPrint (SkolemEscapesScope u v unallowedSkolems) =
+        "Skolem escapes scope when unifying" <+> u <+> " & " <+> v <+>
+        " unallowed skolems: " <+> unallowedSkolems

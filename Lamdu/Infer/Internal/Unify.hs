@@ -3,9 +3,6 @@
 module Lamdu.Infer.Internal.Unify
     ( unifyUnsafe
     ) where
-
-import           Prelude.Compat
-
 import           Control.Lens.Operators
 import           Control.Monad (when, unless)
 import           Control.Monad.Trans.Class (lift)
@@ -29,47 +26,62 @@ import           Lamdu.Infer.Internal.Subst (Subst, CanSubst)
 import qualified Lamdu.Infer.Internal.Subst as Subst
 import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 
+import           Prelude.Compat
+
 {-# INLINE unifyUnsafe #-}
 unifyUnsafe :: Type -> Type -> Infer ()
 unifyUnsafe = unifyGeneric
 
+-- These tvs appear in a context that only allows given skolems, so
+-- narrow down the skolem scopes of these tvs
+narrowSkolemScopesIn :: Monad m => SkolemScope -> TV.TypeVars -> M.InferCtx m ()
+narrowSkolemScopesIn allowedSkolems (TV.TypeVars tvs rtvs stvs) =
+    narrow tvs >> narrow rtvs >> narrow stvs
+    where
+        narrow nonSkolems =
+            mapM_ (M.narrowTVScope allowedSkolems)
+            (Set.toList nonSkolems)
+
 varBind :: (Eq t, M.VarKind t, Pretty t) => T.Var t -> t -> Infer ()
 varBind u t
-    | mtv == Just u = return ()
+    | mtTv == Just u = return ()
     | otherwise =
         do
             allSkolems <- M.getSkolems
-            let tSkolems = TV.intersection allSkolems tFree
-            let TV.TypeVars tvs rtvs stvs = tFree `TV.difference` tSkolems
-            case (TV.member u allSkolems, mtv) of
+            case (u `TV.member` allSkolems, mtTv) of
                 (False, _) ->
+                    -- Binding a non-skolem(u) to a type(t)
                     do
                         uAllowedSkolems <- M.getSkolemsInScope u
-                        let narrow nonSkolems =
-                                mapM_ (M.narrowTVScope uAllowedSkolems)
-                                (Set.toList nonSkolems)
-                        narrow tvs >> narrow rtvs >> narrow stvs
+                        let tSkolems = TV.intersection allSkolems tFree
+                        -- u&t both not skolems. Narrow the skolem
+                        -- scope of any free var in t
+                        narrowSkolemScopesIn uAllowedSkolems
+                            (tFree `TV.difference` tSkolems)
+                        -- Next we check if the skolems in 't' escape
+                        -- the scope of u (uAllowedSkolems)
                         let unallowedSkolems =
                                 tSkolems `TV.difference`
                                 (uAllowedSkolems ^. Scope.skolemScopeVars)
                         unless (TV.null unallowedSkolems) $
-                            M.throwError Err.SkolemEscapesScope
-                        -- in my scope: tSkolems
+                            M.throwError $ Err.SkolemEscapesScope (pPrint u) (pPrint t) (pPrint unallowedSkolems)
+                        -- Occurs check:
                         when (u `TV.member` tFree) $
                             M.throwError $ Err.OccursCheckFail (pPrint u) (pPrint t)
                         M.tellSubst u t
                 (True, Nothing) -> M.throwError $ Err.SkolemNotPolymorphic (pPrint u) (pPrint t)
-                (True, Just tv)
-                    | TV.member tv allSkolems -> M.throwError $ Err.SkolemsUnified (pPrint u) (pPrint t)
+                (True, Just tTv)
+                    | tTv `TV.member` allSkolems -> M.throwError $ Err.SkolemsUnified (pPrint u) (pPrint t)
                     | otherwise ->
+                      -- Binding a skolem(u) to a non-skolem type-var
                           do
-                              SkolemScope tvAllowedSkolems <- M.getSkolemsInScope tv
+                              SkolemScope tvAllowedSkolems <- M.getSkolemsInScope tTv
                               unless (u `TV.member` tvAllowedSkolems) $
-                                  M.throwError Err.SkolemEscapesScope
-                              M.tellSubst tv (TV.lift u)
+                                  M.throwError $ Err.SkolemEscapesScope (pPrint u) (pPrint t) (pPrint u)
+                              M.tellSubst tTv (TV.lift u)
     where
         tFree = TV.free t
-        mtv = TV.unlift t
+        mtTv = TV.unlift t
 
 class CanSubst t => Unify t where
     unifyGeneric :: t -> t -> Infer ()

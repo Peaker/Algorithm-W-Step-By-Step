@@ -7,8 +7,6 @@ module Lamdu.Infer.Internal.Scheme
     , applyRenames
     ) where
 
-import           Prelude.Compat
-
 import           Control.Lens.Operators
 import           Control.Monad (liftM)
 import           Data.Map (Map)
@@ -27,6 +25,8 @@ import           Lamdu.Infer.Internal.Monad (InferCtx)
 import qualified Lamdu.Infer.Internal.Monad as M
 import           Lamdu.Infer.Internal.Scope (SkolemScope)
 import qualified Lamdu.Infer.Internal.Subst as Subst
+
+import           Prelude.Compat
 
 {-# INLINE makeScheme #-}
 makeScheme :: M.Context -> Type -> Scheme
@@ -58,7 +58,7 @@ instantiateWithRenames skolemScope (Scheme (TypeVars tv rv sv) constraints t) =
         sumSubsts <- mkInstantiateSubstPart skolemScope "s" sv
         let renames = TV.Renames typeVarSubsts recordSubsts sumSubsts
         let subst = Subst.fromRenames renames
-            constraints' = Constraints.applyRenames renames constraints
+        let constraints' = Constraints.applyRenames renames constraints
         -- Avoid tell for these new constraints, because they refer to
         -- fresh variables, no need to apply the ordinary expensive
         -- and error-emitting tell

@@ -31,32 +31,32 @@ import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 
 exps :: [Val ()]
 exps =
-    [ eLet "id" (lambda "x" id) id
+    [ eLet "id" (P.lambda "x" id) id
 
-    , eLet "id" (lambda "x" id) $ \id' -> id' $$ id'
+    , eLet "id" (P.lambda "x" id) $ \id' -> id' $$ id'
 
-    , eLet "id" (lambda "x" (\x -> eLet "y" x id)) $ \id' -> id' $$ id'
+    , eLet "id" (P.lambda "x" (\x -> eLet "y" x id)) $ \id' -> id' $$ id'
 
-    , eLet "id" (lambda "x" (\x -> eLet "y" x id)) $ \id' -> id' $$ id' $$ litInt 2
+    , eLet "id" (P.lambda "x" (\x -> eLet "y" x id)) $ \id' -> id' $$ id' $$ litInt 2
 
-    , eLet "id" (lambda "x" (\x -> x $$ x)) id
+    , eLet "id" (P.lambda "x" (\x -> x $$ x)) id
 
-    , lambda "m" $ \m ->
+    , P.lambda "m" $ \m ->
         eLet "y" m $ \y ->
         eLet "x" (y $$ litInt 3) id
 
     , litInt 2 $$ litInt 2
 
-    , lambda "a" $ \a ->
+    , P.lambda "a" $ \a ->
         eLet "x"
-        ( lambda "b"
-            ( \_ -> eLet "y" (lambda "c" (\_ -> a $$ litInt 1))
+        ( P.lambda "b"
+            ( \_ -> eLet "y" (P.lambda "c" (\_ -> a $$ litInt 1))
                 (\y -> y $$ litInt 2) )
         ) $ \x -> x $$ litInt 3
 
-    , lambda "a" $ \a -> lambda "b" $ \b -> b $$ (a $$ (a $$ b))
+    , P.lambda "a" $ \a -> P.lambda "b" $ \b -> b $$ (a $$ (a $$ b))
 
-    , lambda "vec" $ \vec ->
+    , P.lambda "vec" $ \vec ->
         "newX" $= (vec $. "x") $
         "newY" $= (vec $. "y") $
         P.recEmpty
@@ -65,28 +65,28 @@ exps =
 
     , eLet "vec" ("x" $= litInt 5 $ "y" $= litInt 7 $ P.recEmpty) ($. "z")
 
-    , lambda "x" $ \x -> "prev" $= (x $. "cur") $ x
+    , P.lambda "x" $ \x -> "prev" $= (x $. "cur") $ x
 
     , "x" $= litInt 2 $ "x" $= litInt 3 $ P.recEmpty
 
-    , lambda "r" ("x" $= litInt 2) $$ ("x" $= litInt 3) P.recEmpty
+    , P.lambda "r" ("x" $= litInt 2) $$ ("x" $= litInt 3) P.recEmpty
 
-    , eLet "f" (lambda "r" ("x" $= litInt 3)) $
+    , eLet "f" (P.lambda "r" ("x" $= litInt 3)) $
         \f -> f $$ ("x" $= litInt 2) P.recEmpty
 
     , "x" $= litInt 1 $ P.hole
 
-    , lambda "x" $ \x -> list [x, x]
+    , P.lambda "x" $ \x -> list [x, x]
 
     , factorialVal, euler1Val, solveDepressedQuarticVal
 
     , eLet "open"
-        ( lambda "x" $ \x ->
+        ( P.lambda "x" $ \x ->
             eLet "y" (x $. "x") $
             \_y -> x ) $ \open ->
         open $$ ("x" $= litInt 0 $ P.recEmpty)
 
-    , P.var "fix" $$ lambda "f"
+    , P.var "fix" $$ P.lambda "f"
         ( \f -> P.hole $$ (f $$ (f $$ (P.var "zipWith" $$ P.hole $$ P.hole $$ P.hole)))
         )
 
@@ -94,9 +94,9 @@ exps =
     , P.absurd
 
     , --maybe:
-      lambda "nothing" $ \nothingHandler ->
-      lambda "just" $ \justHandler ->
-      P._case "Nothing" (lambda "_" (const nothingHandler)) $
+      P.lambda "nothing" $ \nothingHandler ->
+      P.lambda "just" $ \justHandler ->
+      P._case "Nothing" (P.lambda "_" (const nothingHandler)) $
       P._case "Just" justHandler $
       P.absurd
 
@@ -123,9 +123,9 @@ exps =
 
 nullTest :: Val ()
 nullTest =
-    lambda "list" $ \l ->
-    ( P._case "[]" (lambda "_" (const (P.var "True"))) $
-      P._case ":" (lambda "_" (const (P.var "False"))) $
+    P.lambda "list" $ \l ->
+    ( P._case "[]" (P.lambda "_" (const (P.var "True"))) $
+      P._case ":" (P.lambda "_" (const (P.var "False"))) $
       P.absurd
     ) $$ P.fromNom (fst listTypePair) l
 

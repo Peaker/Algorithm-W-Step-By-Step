@@ -5,7 +5,7 @@ module TestVals
     , list
     , factorialVal, euler1Val, solveDepressedQuarticVal
     , factorsVal
-    , lambda, lambdaRecord, letItem, recordType
+    , letItem, recordType
     , eLet
     , litInt, intType
     , listTypePair, boolTypePair, polyIdTypePair, unsafeCoerceTypePair
@@ -43,16 +43,8 @@ eLet name val mkBody = P.app (P.abs name body) val
     where
         body = mkBody $ P.var name
 
-lambda :: V.Var -> (Val () -> Val ()) -> Val ()
-lambda varName mkBody = P.abs varName $ mkBody $ P.var varName
-
-lambdaRecord :: [T.Tag] -> ([Val ()] -> Val ()) -> Val ()
-lambdaRecord names mkBody =
-    lambda "paramsRecord" $ \paramsRec ->
-    mkBody $ map (P.getField paramsRec) names
-
 letItem :: V.Var -> Val () -> (Val () -> Val ()) -> Val ()
-letItem name val mkBody = lambda name mkBody $$ val
+letItem name val mkBody = P.lambda name mkBody $$ val
 
 openRecordType :: T.ProductVar -> [(T.Tag, Type)] -> Type
 openRecordType tv = T.TRecord . foldr (uncurry T.CExtend) (T.CVar tv)
@@ -254,9 +246,9 @@ litInt = P.lit "Int" . BS8.pack . show
 factorialVal :: Val ()
 factorialVal =
     P.var "fix" $$
-    lambda "loop"
+    P.lambda "loop"
     ( \loop ->
-        lambda "x" $ \x ->
+        P.lambda "x" $ \x ->
         P.var "if" $$:
         [ ( "condition", P.var "==" $$
                 infixArgs x (litInt 0) )
@@ -273,7 +265,7 @@ euler1Val =
     ( P.var "filter" $$:
         [ ("from", P.var ".." $$ infixArgs (litInt 1) (litInt 1000))
         , ( "predicate",
-                lambda "x" $ \x ->
+                P.lambda "x" $ \x ->
                 P.var "||" $$ infixArgs
                 ( P.var "==" $$ infixArgs
                     (litInt 0) (P.var "%" $$ infixArgs x (litInt 3)) )
@@ -285,11 +277,11 @@ euler1Val =
 
 solveDepressedQuarticVal :: Val ()
 solveDepressedQuarticVal =
-    lambdaRecord ["e", "d", "c"] $ \[e, d, c] ->
+    P.lambdaRecord "params" ["e", "d", "c"] $ \[e, d, c] ->
     letItem "solvePoly" (P.var "id")
     $ \solvePoly ->
     letItem "sqrts"
-    ( lambda "x" $ \x ->
+    ( P.lambda "x" $ \x ->
         letItem "r"
         ( P.var "sqrt" $$ x
         ) $ \r ->
@@ -317,7 +309,7 @@ solveDepressedQuarticVal =
                         ]))
                     )
                 , ( "mapping",
-                        lambda "x" $ \x ->
+                        P.lambda "x" $ \x ->
                         solvePoly $$ list
                         [ (c %+ (x %* x)) %- (d %/ x)
                         , litInt 2 %* x
@@ -340,13 +332,13 @@ inf str x y = P.var str $$ infixArgs x y
 factorsVal :: Val ()
 factorsVal =
     fix_ $ \loop ->
-    lambdaRecord ["n", "min"] $ \ [n, m] ->
+    P.lambdaRecord "params" ["n", "min"] $ \ [n, m] ->
     if_ ((m %* m) %> n) (list [n]) $
     if_ ((n %% m) %== litInt 0)
     (cons m $ loop $$: [("n", n %// m), ("min", m)]) $
     loop $$: [ ("n", n), ("min", m %+ litInt 1) ]
     where
-        fix_ f = P.var "fix" $$ lambda "loop" f
+        fix_ f = P.var "fix" $$ P.lambda "loop" f
         if_ b t f =
             ( nullaryCase "False" f $
               nullaryCase "True" t $

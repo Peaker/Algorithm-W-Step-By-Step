@@ -17,7 +17,7 @@ import           Lamdu.Expr.Nominal (Nominal, nParams, nominalType, _NominalType
 import           Lamdu.Expr.Scheme (Scheme, schemeType)
 import           Lamdu.Expr.Type (Type)
 import qualified Lamdu.Expr.Type as T
-import           Lamdu.Expr.Val (Val)
+import           Lamdu.Expr.Val.Annotated (Val)
 import qualified Lamdu.Expr.Val as V
 import           Lamdu.Infer (Scope, Infer, infer, Payload, Loaded(..), scopeToTypeMap)
 

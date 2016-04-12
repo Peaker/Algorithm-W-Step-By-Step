@@ -61,8 +61,9 @@ import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Lamdu.Expr.Type (Type)
 import qualified Lamdu.Expr.Type as T
-import           Lamdu.Expr.Val (Val(..))
 import qualified Lamdu.Expr.Val as V
+import           Lamdu.Expr.Val.Annotated (Val(..))
+import qualified Lamdu.Expr.Val.Annotated as Val
 
 import           Prelude.Compat
 
@@ -89,15 +90,15 @@ typeTIds f x = nextLayer (typeTIds f) x
 
 {-# INLINE valApply #-}
 valApply :: Traversal' (Val a) (V.Apply (Val a))
-valApply = V.body . _BApp
+valApply = Val.body . _BApp
 
 {-# INLINE valAbs #-}
 valAbs :: Traversal' (Val a) (V.Lam (Val a))
-valAbs = V.body . _BLam
+valAbs = Val.body . _BLam
 
 {-# INLINE pureValBody #-}
 pureValBody :: Iso' (Val ()) (V.Body (Val ()))
-pureValBody = iso V._valBody (Val ())
+pureValBody = iso Val._valBody (Val ())
 
 {-# INLINE pureValApply #-}
 pureValApply :: Prism' (Val ()) (V.Apply (Val ()))
@@ -105,23 +106,23 @@ pureValApply = pureValBody . _BApp
 
 {-# INLINE valHole #-}
 valHole :: Traversal' (Val a) ()
-valHole = V.body . valBodyHole
+valHole = Val.body . valBodyHole
 
 {-# INLINE valVar #-}
 valVar :: Traversal' (Val a) V.Var
-valVar = V.body . valBodyVar
+valVar = Val.body . valBodyVar
 
 {-# INLINE valRecEmpty #-}
 valRecEmpty :: Traversal' (Val a) ()
-valRecEmpty = V.body . valBodyRecEmpty
+valRecEmpty = Val.body . valBodyRecEmpty
 
 {-# INLINE valLiteral #-}
 valLiteral :: Traversal' (Val a) V.PrimVal
-valLiteral = V.body . valBodyLiteral
+valLiteral = Val.body . valBodyLiteral
 
 {-# INLINE valGetField #-}
 valGetField  :: Traversal' (Val a) (V.GetField (Val a))
-valGetField = V.body . _BGetField
+valGetField = Val.body . _BGetField
 
 {-# INLINE _LHole #-}
 _LHole :: Prism' V.Leaf ()
@@ -310,7 +311,7 @@ subExprs :: Lens.Fold (Val a) (Val a)
 subExprs =
     Lens.folding f
     where
-        f x = x : x ^.. V.body . Lens.traversed . subExprs
+        f x = x : x ^.. Val.body . Lens.traversed . subExprs
 
 {-# INLINE payloadsIndexedByPath #-}
 payloadsIndexedByPath ::
@@ -335,7 +336,7 @@ payloadsOf ::
 payloadsOf body =
     subExprPayloads . Lens.ifiltered predicate
     where
-        predicate idx _ = Lens.has (V.body . body) idx
+        predicate idx _ = Lens.has (Val.body . body) idx
 
 {-# INLINE biTraverseBodyTags #-}
 biTraverseBodyTags ::
@@ -360,7 +361,7 @@ bodyTags f = biTraverseBodyTags f pure
 
 {-# INLINE valTags #-}
 valTags :: Lens.Traversal' (Val a) T.Tag
-valTags f = V.body $ biTraverseBodyTags f (valTags f)
+valTags f = Val.body $ biTraverseBodyTags f (valTags f)
 
 {-# INLINE valGlobals #-}
 valGlobals :: Set V.Var -> Lens.Fold (Val a) V.Var

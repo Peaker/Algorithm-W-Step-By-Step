@@ -27,6 +27,7 @@ library
                      , Lamdu.Expr.Type.Match
                      , Lamdu.Expr.TypeVars
                      , Lamdu.Expr.Val
+                     , Lamdu.Expr.Val.Annotated
                      , Lamdu.Infer
                      , Lamdu.Infer.Error
                      , Lamdu.Infer.Load

@@ -30,7 +30,7 @@ import qualified Lamdu.Expr.Scheme as Scheme
 import           Lamdu.Expr.Type (Type, (~>))
 import qualified Lamdu.Expr.Type as T
 import qualified Lamdu.Expr.TypeVars as TV
-import           Lamdu.Expr.Val (Val)
+import           Lamdu.Expr.Val.Annotated (Val)
 import qualified Lamdu.Expr.Val as V
 import           Lamdu.Infer (TypeVars(..), Loaded(..))
 

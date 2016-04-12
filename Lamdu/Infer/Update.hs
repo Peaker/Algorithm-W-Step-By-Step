@@ -9,7 +9,7 @@ import           Prelude.Compat
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
 import qualified Control.Monad.Trans.State as State
-import           Lamdu.Expr.Val (Val)
+import           Lamdu.Expr.Val.Annotated (Val)
 import qualified Lamdu.Infer as Infer
 import qualified Lamdu.Infer.Internal.Monad as M
 import qualified Lamdu.Infer.Internal.Subst as Subst

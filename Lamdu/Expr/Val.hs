@@ -11,9 +11,9 @@ module Lamdu.Expr.Val
     , Lam(..), lamParamId, lamResult
     , RecExtend(..), recTag, recFieldVal, recRest
     , Nom(..), nomId, nomVal
-    , Val(..), body, payload, alphaEq
     , Var(..)
-    , pPrintUnannotated
+    , pPrintPrecBody
+    , Match(..)
     ) where
 
 import           Prelude.Compat hiding (any)
@@ -25,11 +25,8 @@ import           Control.Lens.Operators
 import           Data.Binary (Binary)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
-import qualified Data.Foldable as Foldable
 import           Data.Hashable (Hashable(..))
 import           Data.Hashable.Generic (gHashWithSalt)
-import qualified Data.Map as Map
-import           Data.Maybe (fromMaybe)
 import           Data.String (IsString(..))
 import           GHC.Generics (Generic)
 import           Lamdu.Expr.Identifier (Identifier)
@@ -217,21 +214,7 @@ instance NFData exp => NFData (Body exp) where rnf = genericRnf
 instance Hashable exp => Hashable (Body exp) where hashWithSalt = gHashWithSalt
 instance Binary exp => Binary (Body exp)
 
-data Val a = Val
-    { _valPayload :: a
-    , _valBody :: !(Body (Val a))
-    } deriving (Functor, Foldable, Traversable, Generic, Show, Eq)
-instance NFData a => NFData (Val a) where rnf = genericRnf
-instance Hashable a => Hashable (Val a) where hashWithSalt = gHashWithSalt
-instance Binary a => Binary (Val a)
-
-body :: Lens' (Val a) (Body (Val a))
-body f (Val pl b) = Val pl <$> f b
-
-payload :: Lens' (Val a) a
-payload f (Val pl b) = (`Val` b) <$> f pl
-
-pPrintPrecBody :: Pretty pl => PrettyLevel -> Rational -> Body (Val pl) -> PP.Doc
+pPrintPrecBody :: Pretty a => PrettyLevel -> Rational -> Body a -> PP.Doc
 pPrintPrecBody lvl prec b =
     case b of
     BLeaf (LVar var)          -> pPrint var
@@ -265,46 +248,3 @@ pPrintPrecBody lvl prec b =
                                  PP.text "}"
         where
             prField = pPrint tag <+> PP.text "=" <+> pPrint val
-
-instance Pretty a => Pretty (Val a) where
-    pPrintPrec lvl prec (Val pl b)
-        | PP.isEmpty plDoc = pPrintPrecBody lvl prec b
-        | otherwise =
-            maybeParens (13 < prec) $ mconcat
-            [ pPrintPrecBody lvl 14 b, PP.text "{", plDoc, PP.text "}" ]
-        where
-            plDoc = pPrintPrec lvl 0 pl
-
-data EmptyDoc = EmptyDoc
-instance Pretty EmptyDoc where
-    pPrint _ = PP.empty
-
-pPrintUnannotated :: Val a -> PP.Doc
-pPrintUnannotated = pPrint . (EmptyDoc <$)
-
-alphaEq :: Val () -> Val () -> Bool
-alphaEq =
-    go Map.empty
-    where
-        xToYConv xToY x =
-            fromMaybe x $ Map.lookup x xToY
-        go xToY (Val _ xBody) (Val _ yBody) =
-            case (xBody, yBody) of
-            (BLam (Lam xvar xresult),
-              BLam (Lam yvar yresult)) ->
-                go (Map.insert xvar yvar xToY) xresult yresult
-            (BLeaf (LVar x), BLeaf (LVar y)) ->
-                -- TODO: This is probably not 100% correct for various
-                -- shadowing corner cases
-                xToYConv xToY x == y
-            (BLeaf x, BLeaf y) -> x == y
-            (BApp x, BApp y) -> goRecurse x y
-            (BGetField x, BGetField y) -> goRecurse x y
-            (BRecExtend x, BRecExtend y) -> goRecurse x y
-            (BCase x, BCase y) -> goRecurse x y
-            (BInject x, BInject y) -> goRecurse x y
-            (BFromNom x, BFromNom y) -> goRecurse x y
-            (BToNom x, BToNom y) -> goRecurse x y
-            (_, _) -> False
-            where
-                goRecurse x y = maybe False Foldable.and $ match (go xToY) x y

@@ -10,8 +10,8 @@ import qualified Data.Map as M
 import           Lamdu.Expr.Pure (($$), ($=), ($.))
 import qualified Lamdu.Expr.Pure as P
 import           Lamdu.Expr.Type ((~>), Type(..), Composite(..))
-import           Lamdu.Expr.Val (Val(..))
-import qualified Lamdu.Expr.Val as V
+import           Lamdu.Expr.Val.Annotated (Val(..))
+import qualified Lamdu.Expr.Val.Annotated as Val
 import           Lamdu.Expr.Val.Arbitrary ()
 import           Lamdu.Infer
 import           Lamdu.Infer.Unify
@@ -153,11 +153,11 @@ runAndPrint :: Val a -> Infer (Type, Val (Payload, b)) -> IO ()
 runAndPrint e =
     printResult . (`runStateT` initialContext) . run
     where
-        printResult (Left err) = print (V.pPrintUnannotated e $+$ pPrint err)
+        printResult (Left err) = print (Val.pPrintUnannotated e $+$ pPrint err)
         printResult (Right ((typ, val), finalContext)) =
             do
                 let scheme = makeScheme finalContext typ
-                print $ V.pPrintUnannotated val <+> PP.text "::" <+> pPrint scheme
+                print $ Val.pPrintUnannotated val <+> PP.text "::" <+> pPrint scheme
                 let next = modify (+1) >> get
                     tag x =
                       do  n <- zoom _1 next
@@ -173,7 +173,7 @@ inferType :: Scope -> Val a -> Infer (Type, Val (Payload, a))
 inferType scope e =
     do
         e' <- infer env scope e
-        let t = e' ^. V.payload . _1 . plType
+        let t = e' ^. Val.payload . _1 . plType
         return (t, e')
 
 test :: Val () -> IO ()
@@ -191,7 +191,7 @@ testUnify x y =
         printResult (Right (res, _ctx)) = print $ printCase $+$ pPrint res
 
 prop_alphaEq :: Val () -> Bool
-prop_alphaEq v = v `V.alphaEq` v
+prop_alphaEq v = v `Val.alphaEq` v
 
 -- TODO: prop that top-level type equals the result type in scheme
 

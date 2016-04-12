@@ -12,7 +12,7 @@ module Lamdu.Expr.Pure
 import           Prelude.Compat hiding (abs)
 
 import           Data.ByteString (ByteString)
-import           Lamdu.Expr.Val (Val(..))
+import           Lamdu.Expr.Val.Annotated (Val(..))
 import qualified Lamdu.Expr.Type as T
 import qualified Lamdu.Expr.Val as V
 

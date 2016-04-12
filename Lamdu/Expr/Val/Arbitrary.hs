@@ -23,7 +23,7 @@ import           Data.String (IsString(..))
 import           Lamdu.Expr.Identifier (Identifier(..))
 import           Lamdu.Expr.Scheme (Scheme)
 import qualified Lamdu.Expr.Type as T
-import           Lamdu.Expr.Val (Val(..))
+import           Lamdu.Expr.Val.Annotated (Val(..))
 import qualified Lamdu.Expr.Val as V
 import           Test.QuickCheck (Arbitrary(..), Gen)
 import qualified Test.QuickCheck.Gen as Gen

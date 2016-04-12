@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Data.ByteString.Hex
     ( showHexByte
     , showHexBytes
@@ -11,6 +12,8 @@ import qualified Data.ByteString as SBS
 import qualified Data.Char as Char
 import           Data.Word (Word8)
 import           Text.Printf (printf)
+
+import Prelude.Compat
 
 showHexByte :: Word8 -> String
 showHexByte = printf "%02x"

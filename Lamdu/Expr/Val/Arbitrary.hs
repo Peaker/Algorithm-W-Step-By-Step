@@ -86,7 +86,7 @@ arbitraryLeaf = do
 arbitraryBody :: Arbitrary a => GenExpr (V.Body (Val a))
 arbitraryBody =
     join . liftGen . Gen.frequency . (Lens.mapped . _2 %~ pure) $
-    [ weight 2  $ V.BAbs         <$> arbitraryLam
+    [ weight 2  $ V.BLam         <$> arbitraryLam
     , weight 2  $ V.BRecExtend   <$> arbitraryRecExtend
     , weight 2  $ V.BCase        <$> arbitraryCase
     , weight 2  $ V.BInject      <$> arbitraryInject

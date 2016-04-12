@@ -9,7 +9,7 @@ module Lamdu.Expr.Lens
     -- ValBody prisms:
     , _BLeaf
     , _BApp
-    , _BAbs
+    , _BLam
     , _BGetField
     , _BRecExtend
     , _BCase
@@ -93,7 +93,7 @@ valApply = V.body . _BApp
 
 {-# INLINE valAbs #-}
 valAbs :: Traversal' (Val a) (V.Lam (Val a))
-valAbs = V.body . _BAbs
+valAbs = V.body . _BLam
 
 {-# INLINE pureValBody #-}
 pureValBody :: Iso' (Val ()) (V.Body (Val ()))
@@ -173,11 +173,11 @@ _BApp = prism' V.BApp get
         get (V.BApp x) = Just x
         get _ = Nothing
 
-{-# INLINE _BAbs #-}
-_BAbs :: Prism' (V.Body a) (V.Lam a)
-_BAbs = prism' V.BAbs get
+{-# INLINE _BLam #-}
+_BLam :: Prism' (V.Body a) (V.Lam a)
+_BLam = prism' V.BLam get
     where
-        get (V.BAbs x) = Just x
+        get (V.BLam x) = Just x
         get _ = Nothing
 
 {-# INLINE _BGetField #-}
@@ -369,9 +369,9 @@ valGlobals scope f (Val pl body) =
     V.BLeaf (V.LVar v)
         | Set.member v scope -> V.LVar v & V.BLeaf & pure
         | otherwise -> f v <&> V.LVar <&> V.BLeaf
-    V.BAbs (V.Lam var lamBody) ->
+    V.BLam (V.Lam var lamBody) ->
         valGlobals (Set.insert var scope) f lamBody
-        <&> V.Lam var <&> V.BAbs
+        <&> V.Lam var <&> V.BLam
     _ -> body & Lens.traverse . valGlobals scope %%~ f
     <&> Val pl
 

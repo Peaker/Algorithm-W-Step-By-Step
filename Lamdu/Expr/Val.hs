@@ -1,3 +1,4 @@
+-- | Val AST
 {-# LANGUAGE NoImplicitPrelude, DeriveGeneric, DeriveFunctor, DeriveFoldable, DeriveTraversable, GeneralizedNewtypeDeriving, RecordWildCards #-}
 module Lamdu.Expr.Val
     ( Leaf(..)
@@ -200,7 +201,7 @@ nomVal f Nom {..} = f _nomVal <&> \_nomVal -> Nom {..}
 
 data Body exp
     =  BApp {-# UNPACK #-}!(Apply exp)
-    |  BAbs {-# UNPACK #-}!(Lam exp)
+    |  BLam {-# UNPACK #-}!(Lam exp)
     |  BGetField {-# UNPACK #-}!(GetField exp)
     |  BRecExtend {-# UNPACK #-}!(RecExtend exp)
     |  BInject {-# UNPACK #-}!(Inject exp)
@@ -239,7 +240,7 @@ pPrintPrecBody lvl prec b =
     BLeaf LAbsurd             -> PP.text "absurd"
     BApp (Apply e1 e2)        -> maybeParens (10 < prec) $
                                  pPrintPrec lvl 10 e1 <+> pPrintPrec lvl 11 e2
-    BAbs (Lam n e)            -> maybeParens (0 < prec) $
+    BLam (Lam n e)            -> maybeParens (0 < prec) $
                                  PP.char '\\' <> pPrint n <+>
                                  PP.text "->" <+>
                                  pPrint e
@@ -289,8 +290,8 @@ alphaEq =
             fromMaybe x $ Map.lookup x xToY
         go xToY (Val _ xBody) (Val _ yBody) =
             case (xBody, yBody) of
-            (BAbs (Lam xvar xresult),
-              BAbs (Lam yvar yresult)) ->
+            (BLam (Lam xvar xresult),
+              BLam (Lam yvar yresult)) ->
                 go (Map.insert xvar yvar xToY) xresult yresult
             (BLeaf (LVar x), BLeaf (LVar y)) ->
                 -- TODO: This is probably not 100% correct for various

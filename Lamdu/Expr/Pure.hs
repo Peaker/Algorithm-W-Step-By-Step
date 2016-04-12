@@ -18,7 +18,7 @@ import qualified Lamdu.Expr.Val as V
 
 abs :: Monoid a => V.Var -> Val a -> Val a
 abs name body =
-    Val mempty $ V.BAbs $ V.Lam name body
+    Val mempty $ V.BLam $ V.Lam name body
 
 leaf :: Monoid a => V.Leaf -> Val a
 leaf = Val mempty . V.BLeaf

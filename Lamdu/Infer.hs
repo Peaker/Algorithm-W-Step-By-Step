@@ -150,7 +150,7 @@ inferAbs (V.Lam n e) = \go locals ->
         tv <- freshInferredVar locals "a"
         let locals' = Scope.insertTypeOf n tv locals
         ((t1, e'), s1) <- M.listenSubst $ go locals' e
-        return (V.BAbs (V.Lam n e'), T.TFun (Subst.apply s1 tv) t1)
+        return (V.BLam (V.Lam n e'), T.TFun (Subst.apply s1 tv) t1)
 
 {-# INLINE inferApply #-}
 inferApply :: V.Apply a -> InferHandler a b
@@ -322,7 +322,7 @@ inferInternal f loaded =
         go locals (Val pl body) =
             ( case body of
               V.BLeaf leaf -> inferLeaf (loadedGlobalTypes loaded) leaf
-              V.BAbs lam -> inferAbs lam
+              V.BLam lam -> inferAbs lam
               V.BApp app -> inferApply app
               V.BGetField getField -> inferGetField getField
               V.BInject inject -> inferInject inject

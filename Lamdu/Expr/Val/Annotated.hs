@@ -42,10 +42,10 @@ payload f (Val pl b) = (`Val` b) <$> f pl
 
 instance Pretty a => Pretty (Val a) where
     pPrintPrec lvl prec (Val pl b)
-        | PP.isEmpty plDoc = Val.pPrintPrecBody lvl prec b
+        | PP.isEmpty plDoc = pPrintPrec lvl prec b
         | otherwise =
             maybeParens (13 < prec) $ mconcat
-            [ Val.pPrintPrecBody lvl 14 b, PP.text "{", plDoc, PP.text "}" ]
+            [ pPrintPrec lvl 14 b, PP.text "{", plDoc, PP.text "}" ]
         where
             plDoc = pPrintPrec lvl 0 pl
 

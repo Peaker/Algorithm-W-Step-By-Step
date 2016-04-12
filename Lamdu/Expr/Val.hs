@@ -12,7 +12,6 @@ module Lamdu.Expr.Val
     , RecExtend(..), recTag, recFieldVal, recRest
     , Nom(..), nomId, nomVal
     , Var(..)
-    , pPrintPrecBody
     , Match(..)
     ) where
 
@@ -33,7 +32,7 @@ import           Lamdu.Expr.Identifier (Identifier)
 import qualified Lamdu.Expr.Type as T
 import           Text.PrettyPrint ((<+>), (<>))
 import qualified Text.PrettyPrint as PP
-import           Text.PrettyPrint.HughesPJClass.Compat (Pretty(..), PrettyLevel, maybeParens)
+import           Text.PrettyPrint.HughesPJClass.Compat (Pretty(..), maybeParens)
 
 {-# ANN module ("HLint: ignore Use const"::String) #-}
 
@@ -214,37 +213,37 @@ instance NFData exp => NFData (Body exp) where rnf = genericRnf
 instance Hashable exp => Hashable (Body exp) where hashWithSalt = gHashWithSalt
 instance Binary exp => Binary (Body exp)
 
-pPrintPrecBody :: Pretty a => PrettyLevel -> Rational -> Body a -> PP.Doc
-pPrintPrecBody lvl prec b =
-    case b of
-    BLeaf (LVar var)          -> pPrint var
-    BLeaf (LLiteral (PrimVal _p d)) -> PP.text (BS8.unpack d)
-    BLeaf LHole               -> PP.text "?"
-    BLeaf LAbsurd             -> PP.text "absurd"
-    BApp (Apply e1 e2)        -> maybeParens (10 < prec) $
-                                 pPrintPrec lvl 10 e1 <+> pPrintPrec lvl 11 e2
-    BLam (Lam n e)            -> maybeParens (0 < prec) $
-                                 PP.char '\\' <> pPrint n <+>
-                                 PP.text "->" <+>
-                                 pPrint e
-    BGetField (GetField e n)  -> maybeParens (12 < prec) $
-                                 pPrintPrec lvl 12 e <> PP.char '.' <> pPrint n
-    BInject (Inject n e)      -> maybeParens (12 < prec) $
-                                 pPrint n <> PP.char '{' <> pPrintPrec lvl 12 e <> PP.char '}'
-    BCase (Case n m mm)       -> maybeParens (0 < prec) $
-                                 PP.vcat
-                                 [ PP.text "case of"
-                                 , pPrint n <> PP.text " -> " <> pPrint m
-                                 , PP.text "_" <> PP.text " -> " <> pPrint mm
-                                 ]
-    BToNom (Nom ident val)    -> PP.text "[ ->" <+> pPrint ident <+> pPrint val <+> PP.text "]"
-    BFromNom (Nom ident val)  -> PP.text "[" <+> pPrint ident <+> pPrint val <+> PP.text "-> ]"
-    BLeaf LRecEmpty           -> PP.text "{}"
-    BRecExtend (RecExtend tag val rest) ->
-                                 PP.text "{" <+>
-                                 prField <>
-                                 PP.comma <+>
-                                 pPrint rest <+>
-                                 PP.text "}"
-        where
-            prField = pPrint tag <+> PP.text "=" <+> pPrint val
+instance Pretty a => Pretty (Body a) where
+    pPrintPrec lvl prec b =
+        case b of
+        BLeaf (LVar var)          -> pPrint var
+        BLeaf (LLiteral (PrimVal _p d)) -> PP.text (BS8.unpack d)
+        BLeaf LHole               -> PP.text "?"
+        BLeaf LAbsurd             -> PP.text "absurd"
+        BApp (Apply e1 e2)        -> maybeParens (10 < prec) $
+                                     pPrintPrec lvl 10 e1 <+> pPrintPrec lvl 11 e2
+        BLam (Lam n e)            -> maybeParens (0 < prec) $
+                                     PP.char '\\' <> pPrint n <+>
+                                     PP.text "->" <+>
+                                     pPrint e
+        BGetField (GetField e n)  -> maybeParens (12 < prec) $
+                                     pPrintPrec lvl 12 e <> PP.char '.' <> pPrint n
+        BInject (Inject n e)      -> maybeParens (12 < prec) $
+                                     pPrint n <> PP.char '{' <> pPrintPrec lvl 12 e <> PP.char '}'
+        BCase (Case n m mm)       -> maybeParens (0 < prec) $
+                                     PP.vcat
+                                     [ PP.text "case of"
+                                     , pPrint n <> PP.text " -> " <> pPrint m
+                                     , PP.text "_" <> PP.text " -> " <> pPrint mm
+                                     ]
+        BToNom (Nom ident val)    -> PP.text "[ ->" <+> pPrint ident <+> pPrint val <+> PP.text "]"
+        BFromNom (Nom ident val)  -> PP.text "[" <+> pPrint ident <+> pPrint val <+> PP.text "-> ]"
+        BLeaf LRecEmpty           -> PP.text "{}"
+        BRecExtend (RecExtend tag val rest) ->
+                                     PP.text "{" <+>
+                                     prField <>
+                                     PP.comma <+>
+                                     pPrint rest <+>
+                                     PP.text "}"
+            where
+                prField = pPrint tag <+> PP.text "=" <+> pPrint val

@@ -13,14 +13,14 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Set (Set)
 import qualified Data.Set as Set
-import           Lamdu.Expr.Constraints (Constraints)
-import qualified Lamdu.Expr.Constraints as Constraints
-import           Lamdu.Expr.Scheme (Scheme(..))
-import qualified Lamdu.Expr.Scheme as Scheme
-import           Lamdu.Expr.Type (Type)
-import qualified Lamdu.Expr.Type as T
-import           Lamdu.Expr.TypeVars (TypeVars(..))
-import qualified Lamdu.Expr.TypeVars as TV
+import           Lamdu.Calc.Type (Type)
+import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Type.Constraints (Constraints)
+import qualified Lamdu.Calc.Type.Constraints as Constraints
+import           Lamdu.Calc.Type.Scheme (Scheme(..))
+import qualified Lamdu.Calc.Type.Scheme as Scheme
+import           Lamdu.Calc.Type.Vars (TypeVars(..))
+import qualified Lamdu.Calc.Type.Vars as TV
 import           Lamdu.Infer.Internal.Monad (InferCtx)
 import qualified Lamdu.Infer.Internal.Monad as M
 import           Lamdu.Infer.Internal.Scope (SkolemScope)

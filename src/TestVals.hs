@@ -21,17 +21,17 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import qualified Data.Set as Set
-import           Lamdu.Expr.Constraints (Constraints(..), CompositeVarConstraints(..))
-import           Lamdu.Expr.Nominal (Nominal(..), NominalType(..))
+import           Lamdu.Calc.Type (Type, (~>))
+import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..))
+import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..))
+import           Lamdu.Calc.Type.Scheme (Scheme(..))
+import qualified Lamdu.Calc.Type.Scheme as Scheme
+import qualified Lamdu.Calc.Type.Vars as TV
+import           Lamdu.Calc.Val.Annotated (Val)
+import qualified Lamdu.Calc.Val as V
 import           Lamdu.Expr.Pure (($$), ($$:))
 import qualified Lamdu.Expr.Pure as P
-import           Lamdu.Expr.Scheme (Scheme(..))
-import qualified Lamdu.Expr.Scheme as Scheme
-import           Lamdu.Expr.Type (Type, (~>))
-import qualified Lamdu.Expr.Type as T
-import qualified Lamdu.Expr.TypeVars as TV
-import           Lamdu.Expr.Val.Annotated (Val)
-import qualified Lamdu.Expr.Val as V
 import           Lamdu.Infer (TypeVars(..), Loaded(..))
 
 {-# ANN module ("HLint: ignore Redundant $" :: String) #-}
@@ -61,8 +61,8 @@ stTypePair :: (T.NominalId, Nominal)
 stTypePair =
     ( "ST"
     , Nominal
-        { nParams = Map.fromList [("res", "A"), ("s", "S")]
-        , nType = OpaqueNominal
+        { _nomParams = Map.fromList [("res", "A"), ("s", "S")]
+        , _nomType = OpaqueNominal
         }
     )
 
@@ -73,8 +73,8 @@ listTypePair :: (T.NominalId, Nominal)
 listTypePair =
     ( "List"
     , Nominal
-        { nParams = Map.singleton "elem" tvName
-        , nType =
+        { _nomParams = Map.singleton "elem" tvName
+        , _nomType =
             T.CEmpty
             & T.CExtend "[]" (recordType [])
             & T.CExtend ":" (recordType [("head", tv), ("tail", listOf tv)])
@@ -100,8 +100,8 @@ boolTypePair :: (T.NominalId, Nominal)
 boolTypePair =
     ( "Bool"
     , Nominal
-        { nParams = Map.empty
-        , nType =
+        { _nomParams = Map.empty
+        , _nomType =
             T.CEmpty
             & T.CExtend "True" (recordType [])
             & T.CExtend "False" (recordType [])
@@ -127,8 +127,8 @@ polyIdTypePair :: (T.NominalId, Nominal)
 polyIdTypePair =
     ( "PolyIdentity"
     , Nominal
-        { nParams = Map.empty
-        , nType =
+        { _nomParams = Map.empty
+        , _nomType =
             NominalType $ Scheme (TV.singleton tvA) mempty $
             ta ~> ta
         }
@@ -138,8 +138,8 @@ polySTPair :: (T.NominalId, Nominal)
 polySTPair =
     ( "PolyST"
     , Nominal
-      { nParams = Map.singleton "res" tvA
-      , nType =
+      { _nomParams = Map.singleton "res" tvA
+      , _nomType =
           NominalType $ Scheme (TV.singleton tvS) mempty $
           T.TInst (fst stTypePair) $ Map.fromList
           [ ("s", T.TVar tvS)
@@ -157,8 +157,8 @@ unsafeCoerceTypePair :: (T.NominalId, Nominal)
 unsafeCoerceTypePair =
     ( "UnsafeCoerce"
     , Nominal
-        { nParams = Map.empty
-        , nType =
+        { _nomParams = Map.empty
+        , _nomType =
             NominalType $ Scheme (TV.singleton tvA <> TV.singleton tvB) mempty $
             ta ~> tb
         }
@@ -168,8 +168,8 @@ ignoredParamTypePair :: (T.NominalId, Nominal)
 ignoredParamTypePair =
     ( "IgnoredParam"
     , Nominal
-        { nParams = Map.singleton "res" tvB
-        , nType =
+        { _nomParams = Map.singleton "res" tvB
+        , _nomType =
             NominalType $ Scheme (TV.singleton tvA) mempty $
             ta ~> tb
         }
@@ -178,8 +178,8 @@ ignoredParamTypePair =
 xGetter :: (T.ProductVar -> Constraints) -> Nominal
 xGetter constraints =
     Nominal
-    { nParams = Map.empty
-    , nType =
+    { _nomParams = Map.empty
+    , _nomType =
         NominalType $ Scheme (TV.singleton tvA <> TV.singleton tvRest) (constraints tvRest) $
         openRecordType tvRest [("x", ta)] ~> ta
     }

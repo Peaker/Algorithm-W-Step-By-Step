@@ -20,9 +20,9 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import           GHC.Generics (Generic)
-import           Lamdu.Expr.Type (Type)
-import qualified Lamdu.Expr.TypeVars as TV
-import qualified Lamdu.Expr.Val as V
+import           Lamdu.Calc.Type (Type)
+import qualified Lamdu.Calc.Type.Vars as TV
+import qualified Lamdu.Calc.Val as V
 import           Lamdu.Infer.Internal.Subst (CanSubst(..))
 import qualified Lamdu.Infer.Internal.Subst as Subst
 import           Text.PrettyPrint (($+$), (<+>), text, nest, vcat)

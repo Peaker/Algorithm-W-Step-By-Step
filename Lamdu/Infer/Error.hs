@@ -4,9 +4,9 @@ module Lamdu.Infer.Error
     ( Error(..)
     ) where
 
-import           Lamdu.Expr.Constraints (Constraints)
-import qualified Lamdu.Expr.Type as T
-import qualified Lamdu.Expr.Val as V
+import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Type.Constraints (Constraints)
+import qualified Lamdu.Calc.Val as V
 import           Text.PrettyPrint ((<+>), Doc)
 import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 

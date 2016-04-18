@@ -1,22 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, RankNTypes, NoMonomorphismRestriction, FlexibleContexts #-}
 module Lamdu.Expr.Lens
-    -- ValLeaf prisms:
-    ( _LHole
-    , _LRecEmpty
-    , _LAbsurd
-    , _LVar
-    , _LLiteral
-    -- ValBody prisms:
-    , _BLeaf
-    , _BApp
-    , _BLam
-    , _BGetField
-    , _BRecExtend
-    , _BCase
-    , _BInject
-    , _BFromNom, _BToNom
-    -- Leafs
-    , valHole    , valBodyHole
+    ( -- Leafs
+      valHole    , valBodyHole
     , valVar     , valBodyVar
     , valRecEmpty, valBodyRecEmpty
     , valLiteral , valBodyLiteral
@@ -38,14 +23,6 @@ module Lamdu.Expr.Lens
     , subExprs
     , payloadsIndexedByPath
     , payloadsOf
-    -- Type prisms:
-    , _TVar
-    , _TRecord
-    , _TSum
-    , _TFun
-    , _TInst
-    -- Composite prisms:
-    , _CVar
     -- Type traversals:
     , compositeTypes
     , nextLayer
@@ -59,11 +36,11 @@ import           Control.Monad (void)
 import           Data.Map (Map)
 import           Data.Set (Set)
 import qualified Data.Set as Set
-import           Lamdu.Expr.Type (Type)
-import qualified Lamdu.Expr.Type as T
-import qualified Lamdu.Expr.Val as V
-import           Lamdu.Expr.Val.Annotated (Val(..))
-import qualified Lamdu.Expr.Val.Annotated as Val
+import           Lamdu.Calc.Type (Type)
+import qualified Lamdu.Calc.Type as T
+import qualified Lamdu.Calc.Val as V
+import           Lamdu.Calc.Val.Annotated (Val(..))
+import qualified Lamdu.Calc.Val.Annotated as Val
 
 import           Prelude.Compat
 
@@ -90,11 +67,11 @@ typeTIds f x = nextLayer (typeTIds f) x
 
 {-# INLINE valApply #-}
 valApply :: Traversal' (Val a) (V.Apply (Val a))
-valApply = Val.body . _BApp
+valApply = Val.body . V._BApp
 
 {-# INLINE valAbs #-}
 valAbs :: Traversal' (Val a) (V.Lam (Val a))
-valAbs = Val.body . _BLam
+valAbs = Val.body . V._BLam
 
 {-# INLINE pureValBody #-}
 pureValBody :: Iso' (Val ()) (V.Body (Val ()))
@@ -102,7 +79,7 @@ pureValBody = iso Val._valBody (Val ())
 
 {-# INLINE pureValApply #-}
 pureValApply :: Prism' (Val ()) (V.Apply (Val ()))
-pureValApply = pureValBody . _BApp
+pureValApply = pureValBody . V._BApp
 
 {-# INLINE valHole #-}
 valHole :: Traversal' (Val a) ()
@@ -122,122 +99,23 @@ valLiteral = Val.body . valBodyLiteral
 
 {-# INLINE valGetField #-}
 valGetField  :: Traversal' (Val a) (V.GetField (Val a))
-valGetField = Val.body . _BGetField
-
-{-# INLINE _LHole #-}
-_LHole :: Prism' V.Leaf ()
-_LHole = prism' (\() -> V.LHole) get
-    where
-        get V.LHole = Just ()
-        get _ = Nothing
-
-{-# INLINE _LRecEmpty #-}
-_LRecEmpty :: Prism' V.Leaf ()
-_LRecEmpty = prism' (\() -> V.LRecEmpty) get
-    where
-        get V.LRecEmpty = Just ()
-        get _ = Nothing
-
-{-# INLINE _LAbsurd #-}
-_LAbsurd :: Prism' V.Leaf ()
-_LAbsurd = prism' (\() -> V.LAbsurd) get
-    where
-        get V.LAbsurd = Just ()
-        get _ = Nothing
-
-{-# INLINE _LVar #-}
-_LVar :: Prism' V.Leaf V.Var
-_LVar = prism' V.LVar get
-    where
-        get (V.LVar gid) = Just gid
-        get _ = Nothing
-
-{-# INLINE _LLiteral #-}
-_LLiteral :: Prism' V.Leaf V.PrimVal
-_LLiteral = prism' V.LLiteral get
-    where
-        get (V.LLiteral i) = Just i
-        get _ = Nothing
-
-{-# INLINE _BLeaf #-}
--- TODO: _V* -> _B*
-_BLeaf :: Prism' (V.Body a) V.Leaf
-_BLeaf = prism' V.BLeaf get
-    where
-        get (V.BLeaf x) = Just x
-        get _ = Nothing
-
-{-# INLINE _BApp #-}
-_BApp :: Prism' (V.Body a) (V.Apply a)
-_BApp = prism' V.BApp get
-    where
-        get (V.BApp x) = Just x
-        get _ = Nothing
-
-{-# INLINE _BLam #-}
-_BLam :: Prism' (V.Body a) (V.Lam a)
-_BLam = prism' V.BLam get
-    where
-        get (V.BLam x) = Just x
-        get _ = Nothing
-
-{-# INLINE _BGetField #-}
-_BGetField :: Prism' (V.Body a) (V.GetField a)
-_BGetField = prism' V.BGetField get
-    where
-        get (V.BGetField x) = Just x
-        get _ = Nothing
-
-{-# INLINE _BInject #-}
-_BInject :: Prism' (V.Body a) (V.Inject a)
-_BInject = prism' V.BInject get
-    where
-        get (V.BInject x) = Just x
-        get _ = Nothing
-
-{-# INLINE _BFromNom #-}
-_BFromNom :: Prism' (V.Body a) (V.Nom a)
-_BFromNom = prism' V.BFromNom get
-    where
-        get (V.BFromNom x) = Just x
-        get _ = Nothing
-
-{-# INLINE _BToNom #-}
-_BToNom :: Prism' (V.Body a) (V.Nom a)
-_BToNom = prism' V.BToNom get
-    where
-        get (V.BToNom x) = Just x
-        get _ = Nothing
-
-{-# INLINE _BRecExtend #-}
-_BRecExtend :: Prism' (V.Body a) (V.RecExtend a)
-_BRecExtend = prism' V.BRecExtend get
-    where
-        get (V.BRecExtend x) = Just x
-        get _ = Nothing
-
-{-# INLINE _BCase #-}
-_BCase :: Prism' (V.Body a) (V.Case a)
-_BCase = prism' V.BCase get
-    where
-        get (V.BCase x) = Just x
-        get _ = Nothing
+valGetField = Val.body . V._BGetField
 
 {-# INLINE valBodyHole #-}
 valBodyHole :: Prism' (V.Body expr) ()
-valBodyHole = _BLeaf . _LHole
+valBodyHole = V._BLeaf . V._LHole
 
 {-# INLINE valBodyVar #-}
 valBodyVar :: Prism' (V.Body expr) V.Var
-valBodyVar = _BLeaf . _LVar
+valBodyVar = V._BLeaf . V._LVar
 
 {-# INLINE valBodyRecEmpty #-}
 valBodyRecEmpty :: Prism' (V.Body expr) ()
-valBodyRecEmpty = _BLeaf . _LRecEmpty
+valBodyRecEmpty = V._BLeaf . V._LRecEmpty
 
 {-# INLINE valBodyLiteral #-}
 valBodyLiteral :: Prism' (V.Body expr) V.PrimVal
-valBodyLiteral = _BLeaf . _LLiteral
+valBodyLiteral = V._BLeaf . V._LLiteral
 
 {-# INLINE valLeafs #-}
 valLeafs :: Traversal' (Val a) V.Leaf
@@ -246,48 +124,6 @@ valLeafs f (Val pl body) =
     V.BLeaf l -> f l <&> V.BLeaf
     _ -> body & Lens.traverse . valLeafs %%~ f
     <&> Val pl
-
-{-# INLINE _TVar #-}
-_TVar :: Prism' Type T.TypeVar
-_TVar = prism' T.TVar get
-    where
-        get (T.TVar x) = Just x
-        get _ = Nothing
-
-{-# INLINE _TRecord #-}
-_TRecord :: Prism' Type T.Product
-_TRecord = prism' T.TRecord get
-    where
-        get (T.TRecord x) = Just x
-        get _ = Nothing
-
-{-# INLINE _TSum #-}
-_TSum :: Prism' Type T.Sum
-_TSum = prism' T.TSum get
-    where
-        get (T.TSum x) = Just x
-        get _ = Nothing
-
-{-# INLINE _TFun #-}
-_TFun :: Prism' Type (Type, Type)
-_TFun = prism' (uncurry T.TFun) get
-    where
-        get (T.TFun arg res) = Just (arg, res)
-        get _ = Nothing
-
-{-# INLINE _TInst #-}
-_TInst :: Prism' Type (T.NominalId, Map T.ParamId Type)
-_TInst = prism' (uncurry T.TInst) get
-    where
-        get (T.TInst nomId params) = Just (nomId, params)
-        get _ = Nothing
-
-{-# INLINE _CVar #-}
-_CVar :: Prism' (T.Composite p) (T.Var (T.Composite p))
-_CVar = prism' T.CVar get
-    where
-        get (T.CVar x) = Just x
-        get _ = Nothing
 
 {-# INLINE compositeFields #-}
 compositeFields :: Traversal' (T.Composite p) (T.Tag, Type)

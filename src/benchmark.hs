@@ -9,7 +9,7 @@ import Control.Lens.Tuple
 import Control.Monad.State (evalStateT)
 import Criterion (Benchmarkable, whnfIO)
 import Criterion.Main (bench, defaultMain)
-import Lamdu.Expr.Val.Annotated (Val)
+import Lamdu.Calc.Val.Annotated (Val)
 import Lamdu.Infer (infer, plType, initialContext, run, emptyScope)
 import Text.PrettyPrint ((<+>))
 import Text.PrettyPrint.HughesPJClass (Pretty(..))

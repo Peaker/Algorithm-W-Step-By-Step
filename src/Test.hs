@@ -7,11 +7,11 @@ import           Control.Lens.Operators
 import           Control.Lens.Tuple
 import           Control.Monad.State (StateT(..), runState, modify, get)
 import qualified Data.Map as M
+import           Lamdu.Calc.Type ((~>), Type(..), Composite(..))
+import           Lamdu.Calc.Val.Annotated (Val(..))
+import qualified Lamdu.Calc.Val.Annotated as Val
 import           Lamdu.Expr.Pure (($$), ($=), ($.))
 import qualified Lamdu.Expr.Pure as P
-import           Lamdu.Expr.Type ((~>), Type(..), Composite(..))
-import           Lamdu.Expr.Val.Annotated (Val(..))
-import qualified Lamdu.Expr.Val.Annotated as Val
 import           Lamdu.Expr.Val.Arbitrary ()
 import           Lamdu.Infer
 import           Lamdu.Infer.Unify

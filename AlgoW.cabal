@@ -16,18 +16,8 @@ Flag noprettyclass
 library
   ghc-options:         -Wall -O2
   ghc-prof-options:    -auto-all -caf-all -rtsopts
-  exposed-modules:     Lamdu.Expr.Constraints
-                     , Lamdu.Expr.Identifier
+  exposed-modules:     Lamdu.Expr.Lens
                      , Lamdu.Expr.Pure
-                     , Lamdu.Expr.FlatComposite
-                     , Lamdu.Expr.Lens
-                     , Lamdu.Expr.Nominal
-                     , Lamdu.Expr.Scheme
-                     , Lamdu.Expr.Type
-                     , Lamdu.Expr.Type.Match
-                     , Lamdu.Expr.TypeVars
-                     , Lamdu.Expr.Val
-                     , Lamdu.Expr.Val.Annotated
                      , Lamdu.Infer
                      , Lamdu.Infer.Error
                      , Lamdu.Infer.Load
@@ -39,23 +29,21 @@ library
                      , Lamdu.Infer.Internal.Scope
                      , Lamdu.Infer.Internal.Subst
                      , Lamdu.Infer.Internal.Unify
-                     , Data.ByteString.Hex
-                     , Data.Hashable.Generic
                      , Data.Map.Utils
                      , Text.PrettyPrint.Utils
-                     , Text.PrettyPrint.HughesPJClass.Compat
   default-language:    Haskell2010
   build-depends:       base-compat >= 0.8.2 && < 0.10
                      , base >=4.7 && <4.9
+                     , binary >=0.7 && <0.8
+                     , bytestring >=0.10 && <0.11
                      , containers >=0.5 && <0.6
-                     , lens >=4.1
-                     , transformers >=0.3 && <0.5
-                     , hashable >=1.2 && <1.3
                      , deepseq >=1.3 && <1.5
                      , deepseq-generics >=0.1 && <0.2
-                     , bytestring >=0.10 && <0.11
+                     , hashable >=1.2 && <1.3
+                     , lamdu-calculus
+                     , lens >=4.1
                      , random >=1.0 && <1.2
-                     , binary >=0.7 && <0.8
+                     , transformers >=0.3 && <0.5
   if flag(noprettyclass)
     build-depends:     pretty >=1.1.2 && <1.2
   else
@@ -67,11 +55,12 @@ benchmark bench-builder-all
   hs-source-dirs:   src
   main-is:          benchmark.hs
   other-modules:    TestVals
-  build-depends:    base-compat
+  build-depends:    AlgoW
+                  , base-compat
                   , base
                   , criterion >= 1.0.0.0
                   , deepseq
-                  , AlgoW
+                  , lamdu-calculus
                   , lens
                   , containers
                   , mtl
@@ -102,6 +91,7 @@ test-suite algow-test
                      , deepseq
                      , deepseq-generics
                      , hashable
+                     , lamdu-calculus
                      , lens
                      , mtl
                      , test-framework >= 0.8.1.1

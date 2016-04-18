@@ -22,18 +22,18 @@ import           Control.Lens.Tuple
 import           Data.Binary (Binary)
 import           Data.Map (Map)
 import qualified Data.Map as Map
+import           Data.Maybe (fromMaybe)
 import           Data.Monoid ((<>))
 import           Data.Typeable (Typeable)
 import           GHC.Generics (Generic)
-import           Lamdu.Expr.Nominal (Nominal(..), NominalType(..))
-import qualified Lamdu.Expr.Nominal as Nominal
-import           Lamdu.Expr.Scheme (Scheme)
-import           Lamdu.Expr.Type (Type)
-import qualified Lamdu.Expr.Type as T
-import           Lamdu.Expr.TypeVars (TypeVars(..))
-import qualified Lamdu.Expr.TypeVars as TV
-import           Lamdu.Expr.Val.Annotated (Val(..))
-import qualified Lamdu.Expr.Val as V
+import           Lamdu.Calc.Type (Type)
+import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..), _NominalType, nomParams)
+import           Lamdu.Calc.Type.Scheme (Scheme)
+import           Lamdu.Calc.Type.Vars (TypeVars(..))
+import qualified Lamdu.Calc.Type.Vars as TV
+import           Lamdu.Calc.Val.Annotated (Val(..))
+import qualified Lamdu.Calc.Val as V
 import qualified Lamdu.Infer.Error as Err
 import           Lamdu.Infer.Internal.Monad (Infer)
 import qualified Lamdu.Infer.Internal.Monad as M
@@ -269,15 +269,25 @@ getNominal nominals name =
     Nothing -> M.throwError $ Err.MissingNominal name
     Just nominal -> return nominal
 
+-- errorizes if the map mismatches the map in the Nominal
+applyNominal :: Map T.ParamId Type -> Nominal -> NominalType
+applyNominal m (Nominal params scheme) =
+    scheme & _NominalType %~ Subst.apply subst
+    where
+        subst = mempty { Subst.substTypes = Map.mapKeys (`find` params) m }
+        find k =
+            fromMaybe (error "Nominal.instantiate with wrong param map") .
+            Map.lookup k
+
 nomTypes :: SkolemScope -> Map T.NominalId Nominal -> T.NominalId -> M.Infer (Type, Scheme)
 nomTypes outerSkolemsScope nominals name =
     do
         nominal <- getNominal nominals name
         p1_paramVals <-
-            nParams nominal
+            nominal ^. nomParams
             & Map.keysSet & Map.fromSet (const (M.freshInferredVar outerSkolemsScope "n"))
             & sequenceA
-        case Nominal.apply p1_paramVals nominal of
+        case applyNominal p1_paramVals nominal of
             OpaqueNominal -> Err.AccessOpaqueNominal name & M.throwError
             NominalType scheme -> return (T.TInst name p1_paramVals, scheme)
 

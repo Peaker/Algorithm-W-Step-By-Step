@@ -1,0 +1,9 @@
+resolver: lts-5.13
+packages:
+- '.'
+- location:
+    git: https://github.com/lamdu/lamdu-calculus
+    commit: 257003d90ea0f191ebfd15273cc009cd7463e997
+extra-deps: []
+flags: {}
+extra-package-dbs: []

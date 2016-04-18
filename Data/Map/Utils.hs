@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Map.Utils
-    ( lookupOrSelf, pop, popKeys, matchKeys, match, differenceSet
+    ( lookupOrSelf, pop, popKeys, matchKeys, differenceSet
     ) where
 
 import           Prelude.Compat
@@ -34,9 +34,3 @@ matchKeys keys m = do
     (vals, rest) <- popKeys keys m
     guard $ Map.null rest
     return vals
-
-match :: Ord k => (a -> b -> c) -> Map k a -> Map k b -> Maybe (Map k c)
-match valMatch m0 m1
-    | Map.keysSet m0 == Map.keysSet m1 =
-          Just $ Map.intersectionWith valMatch m0 m1
-    | otherwise = Nothing

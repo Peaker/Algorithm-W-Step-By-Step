@@ -10,8 +10,8 @@ import           Control.Monad (foldM)
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import           Lamdu.Expr.Constraints (Constraints(..), CompositeVarConstraints(..))
-import qualified Lamdu.Expr.Type as T
+import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..))
 import           Lamdu.Infer.Error (Error(DuplicateField, DuplicateAlt))
 import           Lamdu.Infer.Internal.Subst (Subst(..))
 

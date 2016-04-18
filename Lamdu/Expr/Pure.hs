@@ -9,12 +9,12 @@ module Lamdu.Expr.Pure
     , ($$), ($$:), ($.), ($=)
     ) where
 
-import           Prelude.Compat hiding (abs)
-
 import           Data.ByteString (ByteString)
-import           Lamdu.Expr.Val.Annotated (Val(..))
-import qualified Lamdu.Expr.Type as T
-import qualified Lamdu.Expr.Val as V
+import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Val.Annotated (Val(..))
+import qualified Lamdu.Calc.Val as V
+
+import           Prelude.Compat hiding (abs)
 
 abs :: Monoid a => V.Var -> Val a -> Val a
 abs name body =

@@ -35,11 +35,11 @@ import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import qualified Data.Set as Set
 import           Data.String (IsString(..))
-import           Lamdu.Expr.Constraints (Constraints(..), CompositeVarConstraints(..))
-import qualified Lamdu.Expr.Constraints as Constraints
-import           Lamdu.Expr.Type (Type)
-import qualified Lamdu.Expr.Type as T
-import qualified Lamdu.Expr.TypeVars as TV
+import           Lamdu.Calc.Type (Type)
+import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..))
+import qualified Lamdu.Calc.Type.Constraints as Constraints
+import qualified Lamdu.Calc.Type.Vars as TV
 import           Lamdu.Infer.Error (Error)
 import qualified Lamdu.Infer.Error as Err
 import qualified Lamdu.Infer.Internal.Constraints as Constraints

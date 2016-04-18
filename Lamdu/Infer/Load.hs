@@ -12,13 +12,13 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Traversable as Traversable
+import           Lamdu.Calc.Type (Type)
+import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Type.Nominal (Nominal, nomParams, nomType, _NominalType)
+import           Lamdu.Calc.Type.Scheme (Scheme, schemeType)
+import           Lamdu.Calc.Val.Annotated (Val)
+import qualified Lamdu.Calc.Val as V
 import           Lamdu.Expr.Lens (nextLayer, valGlobals, valNominals)
-import           Lamdu.Expr.Nominal (Nominal, nParams, nominalType, _NominalType)
-import           Lamdu.Expr.Scheme (Scheme, schemeType)
-import           Lamdu.Expr.Type (Type)
-import qualified Lamdu.Expr.Type as T
-import           Lamdu.Expr.Val.Annotated (Val)
-import qualified Lamdu.Expr.Val as V
 import           Lamdu.Infer (Scope, Infer, infer, Payload, Loaded(..), scopeToTypeMap)
 
 import           Prelude.Compat
@@ -42,7 +42,7 @@ validateType loader nominals typ =
                 typeParams <-
                     Map.lookup nomId nominals
                     & maybe (loadNominal loader nomId) return
-                    <&> nParams
+                    <&> (^. nomParams)
                 unless (ascKeys typeArgs == ascKeys typeParams) $
                     fail $ unwords
                     [ "TInst", show nomId, "gives type args", show typeArgs
@@ -52,7 +52,7 @@ validateType loader nominals typ =
 
 validateLoaded :: Monad m => Loader m -> Loaded -> m ()
 validateLoaded loader (Loaded types nominals) =
-    (nominals ^.. Lens.folded . nominalType . _NominalType . schemeType) ++
+    (nominals ^.. Lens.folded . nomType . _NominalType . schemeType) ++
     (types ^.. Lens.folded . schemeType)
     & traverse_ (validateType loader nominals)
 

@@ -23,6 +23,7 @@ library
                      , Lamdu.Infer.Load
                      , Lamdu.Infer.Unify
                      , Lamdu.Infer.Update
+                     , Text.PrettyPrint.Utils
   other-modules:       Lamdu.Infer.Internal.Constraints
                      , Lamdu.Infer.Internal.Monad
                      , Lamdu.Infer.Internal.Scheme
@@ -30,7 +31,6 @@ library
                      , Lamdu.Infer.Internal.Subst
                      , Lamdu.Infer.Internal.Unify
                      , Data.Map.Utils
-                     , Text.PrettyPrint.Utils
   default-language:    Haskell2010
   build-depends:       base-compat >= 0.8.2 && < 0.10
                      , base >=4.7 && <4.9

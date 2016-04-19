@@ -10,6 +10,7 @@ module Lamdu.Infer
     , M.InferCtx(..), M.inferCtx, Infer
     , freshInferredVarName
     , freshInferredVar
+    , applyNominal
     ) where
 
 import           Prelude.Compat

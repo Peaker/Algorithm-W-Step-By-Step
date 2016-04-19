@@ -13,7 +13,6 @@ module Lamdu.Infer.Internal.Scope
     ) where
 
 import           Control.DeepSeq (NFData(..))
-import           Control.DeepSeq.Generics (genericRnf)
 import qualified Control.Lens as Lens
 import           Data.Binary (Binary)
 import           Data.Map (Map)
@@ -49,8 +48,7 @@ data Scope = Scope
     { scopeSkolems :: SkolemScope
     , scopeTypeOfVar :: Map V.Var Type
     } deriving (Generic, Show)
-
-instance NFData Scope where rnf = genericRnf
+instance NFData Scope
 instance Binary Scope
 
 instance Pretty Scope where

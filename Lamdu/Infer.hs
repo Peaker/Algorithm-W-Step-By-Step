@@ -16,7 +16,6 @@ module Lamdu.Infer
 import           Prelude.Compat
 
 import           Control.DeepSeq (NFData(..))
-import           Control.DeepSeq.Generics (genericRnf)
 import           Control.Lens (Lens')
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
@@ -50,7 +49,7 @@ data Payload = Payload
     { _plType :: Type
     , _plScope :: Scope
     } deriving (Generic, Typeable, Show)
-instance NFData Payload where rnf = genericRnf
+instance NFData Payload
 instance Binary Payload
 
 plType :: Lens' Payload Type

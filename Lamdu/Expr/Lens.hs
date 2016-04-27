@@ -28,6 +28,8 @@ module Lamdu.Expr.Lens
     , nextLayer
     , typeTIds
     , typeTags
+    , constraintsTags
+    , compositeVarConstraintsTags
     ) where
 
 import           Control.Lens (Traversal', Prism', Iso', iso)
@@ -38,6 +40,7 @@ import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
+import           Lamdu.Calc.Type.Constraints (CompositeVarConstraints(..), Constraints(..))
 import qualified Lamdu.Calc.Val as V
 import           Lamdu.Calc.Val.Annotated (Val(..))
 import qualified Lamdu.Calc.Val.Annotated as Val
@@ -70,6 +73,16 @@ typeTags :: Lens.Traversal' Type T.Tag
 typeTags f (T.TRecord composite) = T.TRecord <$> compositeTags f composite
 typeTags f (T.TSum composite) = T.TSum <$> compositeTags f composite
 typeTags f x = nextLayer (typeTags f) x
+
+compositeVarConstraintsTags :: Traversal' (CompositeVarConstraints t) (Set T.Tag)
+compositeVarConstraintsTags f (CompositeVarConstraints m) =
+    CompositeVarConstraints <$> Lens.traverse f m
+
+constraintsTags :: Traversal' Constraints (Set T.Tag)
+constraintsTags f (Constraints productCs sumCs) =
+    Constraints
+    <$> compositeVarConstraintsTags f productCs
+    <*> compositeVarConstraintsTags f sumCs
 
 {-# INLINE valApply #-}
 valApply :: Traversal' (Val a) (V.Apply (Val a))

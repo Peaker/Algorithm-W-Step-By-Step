@@ -27,13 +27,13 @@ module Lamdu.Expr.Lens
     , compositeTypes
     , nextLayer
     , typeTIds
+    , typeTags
     ) where
 
-import           Control.Lens (Traversal', Prism', prism', Iso', iso)
+import           Control.Lens (Traversal', Prism', Iso', iso)
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
 import           Control.Monad (void)
-import           Data.Map (Map)
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Lamdu.Calc.Type (Type)
@@ -64,6 +64,12 @@ typeTIds :: Lens.Traversal' Type T.NominalId
 typeTIds f (T.TInst tId args) =
     T.TInst <$> f tId <*> Lens.traverse (typeTIds f) args
 typeTIds f x = nextLayer (typeTIds f) x
+
+{-# INLINE typeTags #-}
+typeTags :: Lens.Traversal' Type T.Tag
+typeTags f (T.TRecord composite) = T.TRecord <$> compositeTags f composite
+typeTags f (T.TSum composite) = T.TSum <$> compositeTags f composite
+typeTags f x = nextLayer (typeTags f) x
 
 {-# INLINE valApply #-}
 valApply :: Traversal' (Val a) (V.Apply (Val a))

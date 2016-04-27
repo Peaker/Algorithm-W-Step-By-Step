@@ -17,7 +17,6 @@ module Lamdu.Expr.Lens
     , valTags, bodyTags, biTraverseBodyTags
     , valGlobals
     , valNominals
-    , compositeTags, compositeFields
     -- Subexpressions:
     , subExprPayloads
     , subExprs
@@ -26,6 +25,8 @@ module Lamdu.Expr.Lens
     -- Type traversals:
     , schemeTags
     , compositeTypes
+    , compositeTags
+    , compositeFieldTags, compositeFields
     , nextLayer
     , typeTIds
     , typeTags
@@ -162,9 +163,13 @@ compositeFields f (T.CExtend tag typ rest) =
     uncurry T.CExtend <$> f (tag, typ) <*> compositeFields f rest
 compositeFields _ r = pure r
 
+{-# INLINE compositeFieldTags #-}
+compositeFieldTags :: Traversal' (T.Composite p) T.Tag
+compositeFieldTags = compositeFields . Lens._1
+
 {-# INLINE compositeTags #-}
 compositeTags :: Traversal' (T.Composite p) T.Tag
-compositeTags = compositeFields . Lens._1
+compositeTags f = compositeFields $ \(tag, typ) -> (,) <$> f tag <*> typeTags f typ
 
 {-# INLINE subExprPayloads #-}
 subExprPayloads :: Lens.IndexedTraversal (Val ()) (Val a) (Val b) a b

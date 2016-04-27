@@ -24,12 +24,13 @@ module Lamdu.Expr.Lens
     , payloadsIndexedByPath
     , payloadsOf
     -- Type traversals:
+    , schemeTags
     , compositeTypes
     , nextLayer
     , typeTIds
     , typeTags
-    , constraintsTags
-    , compositeVarConstraintsTags
+    , constraintsTagsSet
+    , compositeVarConstraintsTagsSet
     ) where
 
 import           Control.Lens (Traversal', Prism', Iso', iso)
@@ -38,9 +39,11 @@ import           Control.Lens.Operators
 import           Control.Monad (void)
 import           Data.Set (Set)
 import qualified Data.Set as Set
+import           Data.Set.Lens (setmapped)
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
 import           Lamdu.Calc.Type.Constraints (CompositeVarConstraints(..), Constraints(..))
+import           Lamdu.Calc.Type.Scheme (Scheme(..))
 import qualified Lamdu.Calc.Val as V
 import           Lamdu.Calc.Val.Annotated (Val(..))
 import qualified Lamdu.Calc.Val.Annotated as Val
@@ -68,21 +71,30 @@ typeTIds f (T.TInst tId args) =
     T.TInst <$> f tId <*> Lens.traverse (typeTIds f) args
 typeTIds f x = nextLayer (typeTIds f) x
 
+{-# INLINE schemeTags #-}
+schemeTags :: Lens.Setter' Scheme T.Tag
+schemeTags f (Scheme tvs constraints typ) =
+    Scheme tvs
+    <$> (constraintsTagsSet . setmapped) f constraints
+    <*> typeTags f typ
+
 {-# INLINE typeTags #-}
 typeTags :: Lens.Traversal' Type T.Tag
 typeTags f (T.TRecord composite) = T.TRecord <$> compositeTags f composite
 typeTags f (T.TSum composite) = T.TSum <$> compositeTags f composite
 typeTags f x = nextLayer (typeTags f) x
 
-compositeVarConstraintsTags :: Traversal' (CompositeVarConstraints t) (Set T.Tag)
-compositeVarConstraintsTags f (CompositeVarConstraints m) =
+{-# INLINE compositeVarConstraintsTagsSet #-}
+compositeVarConstraintsTagsSet :: Traversal' (CompositeVarConstraints t) (Set T.Tag)
+compositeVarConstraintsTagsSet f (CompositeVarConstraints m) =
     CompositeVarConstraints <$> Lens.traverse f m
 
-constraintsTags :: Traversal' Constraints (Set T.Tag)
-constraintsTags f (Constraints productCs sumCs) =
+{-# INLINE constraintsTagsSet #-}
+constraintsTagsSet :: Traversal' Constraints (Set T.Tag)
+constraintsTagsSet f (Constraints productCs sumCs) =
     Constraints
-    <$> compositeVarConstraintsTags f productCs
-    <*> compositeVarConstraintsTags f sumCs
+    <$> compositeVarConstraintsTagsSet f productCs
+    <*> compositeVarConstraintsTagsSet f sumCs
 
 {-# INLINE valApply #-}
 valApply :: Traversal' (Val a) (V.Apply (Val a))

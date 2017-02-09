@@ -2,7 +2,7 @@
 module Lamdu.Infer
     ( makeScheme
     , TypeVars(..)
-    , Dependencies(..), depsGlobalTypes, depsNominals, emptyDependencies
+    , Dependencies(..), depsGlobalTypes, depsNominals
     , infer, inferFromNom
     , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf
     , Payload(..), plScope, plType
@@ -71,8 +71,9 @@ instance Binary Dependencies
 
 Lens.makeLenses ''Dependencies
 
-emptyDependencies :: Dependencies
-emptyDependencies = Deps Map.empty Map.empty
+instance Monoid Dependencies where
+    mempty = Deps Map.empty Map.empty
+    mappend (Deps t0 n0) (Deps t1 n1) = Deps (mappend t0 t1) (mappend n0 n1)
 
 inferSubst :: Dependencies -> Scope -> Val a -> Infer (Scope, Val (Payload, a))
 inferSubst deps rootScope val =

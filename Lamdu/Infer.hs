@@ -1,8 +1,8 @@
-{-# LANGUAGE NoImplicitPrelude, DeriveDataTypeable, DeriveGeneric, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, DeriveDataTypeable, DeriveGeneric, OverloadedStrings, TemplateHaskell #-}
 module Lamdu.Infer
     ( makeScheme
     , TypeVars(..)
-    , Dependencies(..), emptyDependencies
+    , Dependencies(..), depsGlobalTypes, depsNominals, emptyDependencies
     , infer, inferFromNom
     , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf
     , Payload(..), plScope, plType
@@ -16,7 +16,7 @@ module Lamdu.Infer
 import           Prelude.Compat
 
 import           Control.DeepSeq (NFData(..))
-import           Control.Lens (Lens')
+import qualified Control.Lens as Lens
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
 import           Data.Binary (Binary)
@@ -52,13 +52,7 @@ data Payload = Payload
 instance NFData Payload
 instance Binary Payload
 
-plType :: Lens' Payload Type
-plType f pl = (\t' -> pl { _plType = t' }) <$> f (_plType pl)
-{-# INLINE plType #-}
-
-plScope :: Lens' Payload Scope
-plScope f pl = (\t' -> pl { _plScope = t' }) <$> f (_plScope pl)
-{-# INLINE plScope #-}
+Lens.makeLenses ''Payload
 
 instance TV.Free Payload where
     free (Payload typ scope) =
@@ -69,11 +63,13 @@ instance CanSubst Payload where
         Payload (Subst.apply s typ) (Subst.apply s scope)
 
 data Dependencies = Deps
-    { depsGlobalTypes :: Map V.Var Scheme
-    , depsNominals :: Map T.NominalId Nominal
+    { _depsGlobalTypes :: Map V.Var Scheme
+    , _depsNominals :: Map T.NominalId Nominal
     } deriving (Generic, Show)
 instance NFData Dependencies
 instance Binary Dependencies
+
+Lens.makeLenses ''Dependencies
 
 emptyDependencies :: Dependencies
 emptyDependencies = Deps Map.empty Map.empty
@@ -333,14 +329,14 @@ inferInternal f deps =
     where
         go locals (Val pl body) =
             ( case body of
-              V.BLeaf leaf -> inferLeaf (depsGlobalTypes deps) leaf
+              V.BLeaf leaf -> inferLeaf (deps ^. depsGlobalTypes) leaf
               V.BLam lam -> inferAbs lam
               V.BApp app -> inferApply app
               V.BGetField getField -> inferGetField getField
               V.BInject inject -> inferInject inject
               V.BCase case_ -> inferCase case_
               V.BRecExtend recExtend -> inferRecExtend recExtend
-              V.BFromNom nom -> inferFromNom (depsNominals deps) nom
-              V.BToNom nom -> inferToNom (depsNominals deps) nom
+              V.BFromNom nom -> inferFromNom (deps ^. depsNominals) nom
+              V.BToNom nom -> inferToNom (deps ^. depsNominals) nom
             ) go locals
             <&> \(body', typ) -> (typ, Val (f typ locals pl) body')

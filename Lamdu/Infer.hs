@@ -71,7 +71,7 @@ instance CanSubst Payload where
 data Dependencies = Deps
     { depsGlobalTypes :: Map V.Var Scheme
     , depsNominals :: Map T.NominalId Nominal
-    }
+    } deriving (Generic, Show)
 
 emptyDependencies :: Dependencies
 emptyDependencies = Deps Map.empty Map.empty

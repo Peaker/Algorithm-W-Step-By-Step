@@ -72,6 +72,8 @@ data Dependencies = Deps
     { depsGlobalTypes :: Map V.Var Scheme
     , depsNominals :: Map T.NominalId Nominal
     } deriving (Generic, Show)
+instance NFData Dependencies
+instance Binary Dependencies
 
 emptyDependencies :: Dependencies
 emptyDependencies = Deps Map.empty Map.empty

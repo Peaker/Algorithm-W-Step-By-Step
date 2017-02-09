@@ -2,7 +2,7 @@
 module Lamdu.Infer
     ( makeScheme
     , TypeVars(..)
-    , Loaded(..), emptyLoaded
+    , Dependencies(..), emptyDependencies
     , infer, inferFromNom
     , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf
     , Payload(..), plScope, plType
@@ -68,20 +68,20 @@ instance CanSubst Payload where
     apply s (Payload typ scope) =
         Payload (Subst.apply s typ) (Subst.apply s scope)
 
-data Loaded = Loaded
-    { loadedGlobalTypes :: Map V.Var Scheme
-    , loadedNominals :: Map T.NominalId Nominal
+data Dependencies = Deps
+    { depsGlobalTypes :: Map V.Var Scheme
+    , depsNominals :: Map T.NominalId Nominal
     }
 
-emptyLoaded :: Loaded
-emptyLoaded = Loaded Map.empty Map.empty
+emptyDependencies :: Dependencies
+emptyDependencies = Deps Map.empty Map.empty
 
-inferSubst :: Loaded -> Scope -> Val a -> Infer (Scope, Val (Payload, a))
-inferSubst loaded rootScope val =
+inferSubst :: Dependencies -> Scope -> Val a -> Infer (Scope, Val (Payload, a))
+inferSubst deps rootScope val =
     do
         prevSubst <- M.getSubst
         let rootScope' = Subst.apply prevSubst rootScope
-        (inferredVal, s) <- M.listenSubst $ inferInternal mkPayload loaded rootScope' val
+        (inferredVal, s) <- M.listenSubst $ inferInternal mkPayload deps rootScope' val
         return (rootScope', inferredVal <&> _1 %~ Subst.apply s)
     where
         mkPayload typ scope dat = (Payload typ scope, dat)
@@ -91,10 +91,10 @@ inferSubst loaded rootScope val =
 -- much faster than a polymorphic monad underlying the InferCtx monad
 -- allowing global access.
 -- Use loadInfer for a safer interface
-infer :: Loaded -> Scope -> Val a -> Infer (Val (Payload, a))
-infer loaded scope val =
+infer :: Dependencies -> Scope -> Val a -> Infer (Val (Payload, a))
+infer deps scope val =
     do
-        ((scope', val'), results) <- M.listenNoTell $ inferSubst loaded scope val
+        ((scope', val'), results) <- M.listenNoTell $ inferSubst deps scope val
         M.tell $ results & M.subst %~ Subst.intersect (TV.free scope')
         return val'
 
@@ -325,20 +325,20 @@ inferToNom nominals (V.Nom name val) = \go locals ->
 
 inferInternal ::
     (Type -> Scope -> a -> b) ->
-    Loaded -> Scope -> Val a -> Infer (Val b)
-inferInternal f loaded =
+    Dependencies -> Scope -> Val a -> Infer (Val b)
+inferInternal f deps =
     (fmap . fmap) snd . go
     where
         go locals (Val pl body) =
             ( case body of
-              V.BLeaf leaf -> inferLeaf (loadedGlobalTypes loaded) leaf
+              V.BLeaf leaf -> inferLeaf (depsGlobalTypes deps) leaf
               V.BLam lam -> inferAbs lam
               V.BApp app -> inferApply app
               V.BGetField getField -> inferGetField getField
               V.BInject inject -> inferInject inject
               V.BCase case_ -> inferCase case_
               V.BRecExtend recExtend -> inferRecExtend recExtend
-              V.BFromNom nom -> inferFromNom (loadedNominals loaded) nom
-              V.BToNom nom -> inferToNom (loadedNominals loaded) nom
+              V.BFromNom nom -> inferFromNom (depsNominals deps) nom
+              V.BToNom nom -> inferToNom (depsNominals deps) nom
             ) go locals
             <&> \(body', typ) -> (typ, Val (f typ locals pl) body')

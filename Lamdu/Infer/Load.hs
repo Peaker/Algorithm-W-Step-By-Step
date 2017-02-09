@@ -19,7 +19,7 @@ import           Lamdu.Calc.Type.Scheme (Scheme, schemeType)
 import           Lamdu.Calc.Val.Annotated (Val)
 import qualified Lamdu.Calc.Val as V
 import           Lamdu.Expr.Lens (nextLayer, valGlobals, valNominals)
-import           Lamdu.Infer (Scope, Infer, infer, Payload, Loaded(..), scopeToTypeMap)
+import           Lamdu.Infer (Scope, Infer, infer, Payload, Dependencies(..), scopeToTypeMap)
 
 import           Prelude.Compat
 
@@ -50,17 +50,17 @@ validateType loader nominals typ =
                     ]
         validate _ = return ()
 
-validateLoaded :: Monad m => Loader m -> Loaded -> m ()
-validateLoaded loader (Loaded types nominals) =
+validateLoaded :: Monad m => Loader m -> Dependencies -> m ()
+validateLoaded loader (Deps types nominals) =
     (nominals ^.. Lens.folded . nomType . _NominalType . schemeType) ++
     (types ^.. Lens.folded . schemeType)
     & traverse_ (validateType loader nominals)
 
-loadVal :: Monad m => Loader m -> Scope -> Val a -> m Loaded
+loadVal :: Monad m => Loader m -> Scope -> Val a -> m Dependencies
 loadVal loader scope val =
     do
         loaded <-
-            Loaded
+            Deps
             <$> loadMap loadTypeOf (val ^.. valGlobals (Map.keysSet (scopeToTypeMap scope)))
             <*> loadMap loadNominal (val ^.. valNominals)
         validateLoaded loader loaded

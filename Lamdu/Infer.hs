@@ -2,7 +2,7 @@
 module Lamdu.Infer
     ( makeScheme
     , TypeVars(..)
-    , Dependencies(..), depsGlobalTypes, depsNominals
+    , Dependencies(..), depsGlobalTypes, depsNominals, depTags
     , infer, inferFromNom
     , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf
     , Payload(..), plScope, plType
@@ -12,8 +12,6 @@ module Lamdu.Infer
     , freshInferredVar
     , applyNominal
     ) where
-
-import           Prelude.Compat
 
 import           Control.DeepSeq (NFData(..))
 import qualified Control.Lens as Lens
@@ -28,12 +26,13 @@ import           Data.Typeable (Typeable)
 import           GHC.Generics (Generic)
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
-import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..), _NominalType, nomParams)
+import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..), _NominalType, nomParams, nomType)
 import           Lamdu.Calc.Type.Scheme (Scheme)
 import           Lamdu.Calc.Type.Vars (TypeVars(..))
 import qualified Lamdu.Calc.Type.Vars as TV
-import           Lamdu.Calc.Val.Annotated (Val(..))
 import qualified Lamdu.Calc.Val as V
+import           Lamdu.Calc.Val.Annotated (Val(..))
+import           Lamdu.Expr.Lens (schemeTags)
 import qualified Lamdu.Infer.Error as Err
 import           Lamdu.Infer.Internal.Monad (Infer)
 import qualified Lamdu.Infer.Internal.Monad as M
@@ -44,6 +43,8 @@ import qualified Lamdu.Infer.Internal.Scope as Scope
 import           Lamdu.Infer.Internal.Subst (CanSubst(..))
 import qualified Lamdu.Infer.Internal.Subst as Subst
 import           Lamdu.Infer.Internal.Unify (unifyUnsafe)
+
+import           Prelude.Compat
 
 data Payload = Payload
     { _plType :: Type
@@ -74,6 +75,12 @@ Lens.makeLenses ''Dependencies
 instance Monoid Dependencies where
     mempty = Deps Map.empty Map.empty
     mappend (Deps t0 n0) (Deps t1 n1) = Deps (mappend t0 t1) (mappend n0 n1)
+
+depTags :: Lens.Setter' Dependencies T.Tag
+depTags f (Deps globals nominals) =
+    Deps
+    <$> (traverse . schemeTags) f globals
+    <*> (traverse . nomType . _NominalType . schemeTags) f nominals
 
 inferSubst :: Dependencies -> Scope -> Val a -> Infer (Scope, Val (Payload, a))
 inferSubst deps rootScope val =

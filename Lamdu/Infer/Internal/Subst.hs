@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Lamdu.Infer.Internal.Subst
-    ( HasVar(..), CompositeHasVar
+    ( HasVar(new), CompositeHasVar
     , Subst(..), intersect
     , CanSubst(..)
     , fromRenames

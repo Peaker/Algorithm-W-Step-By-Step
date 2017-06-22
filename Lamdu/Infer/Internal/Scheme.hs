@@ -3,8 +3,6 @@ module Lamdu.Infer.Internal.Scheme
     ( makeScheme
     , instantiateWithRenames
     , instantiate
-    , generalize
-    , applyRenames
     ) where
 
 import           Control.Lens.Operators
@@ -15,7 +13,6 @@ import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
-import           Lamdu.Calc.Type.Constraints (Constraints)
 import qualified Lamdu.Calc.Type.Constraints as Constraints
 import           Lamdu.Calc.Type.Scheme (Scheme(..))
 import qualified Lamdu.Calc.Type.Scheme as Scheme
@@ -43,11 +40,6 @@ mkInstantiateSubstPart skolemScope prefix =
                 freshVarExpr <- M.freshInferredVarName skolemScope prefix
                 return (oldVar, freshVarExpr)
 
-generalize :: TypeVars -> Constraints -> Type -> Scheme
-generalize outerTVs innerConstraints innerType =
-    Scheme tvs (Constraints.intersect tvs innerConstraints) innerType
-    where
-        tvs = TV.free innerType `TV.difference` outerTVs
 
 {-# INLINE instantiateWithRenames #-}
 instantiateWithRenames :: Monad m => SkolemScope -> Scheme -> InferCtx m (TV.Renames, Type)
@@ -68,11 +60,3 @@ instantiateWithRenames skolemScope (Scheme (TypeVars tv rv sv) constraints t) =
 {-# INLINE instantiate #-}
 instantiate :: Monad m => SkolemScope -> Scheme -> InferCtx m Type
 instantiate skolemScope scheme = liftM snd (instantiateWithRenames skolemScope scheme)
-
-{-# INLINE applyRenames #-}
-applyRenames :: TV.Renames -> Scheme -> Scheme
-applyRenames renames (Scheme forAll constraints typ) =
-    Scheme
-    (TV.applyRenames renames forAll)
-    (Constraints.applyRenames renames constraints)
-    (Subst.apply (Subst.fromRenames renames) typ)

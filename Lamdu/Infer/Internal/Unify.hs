@@ -3,6 +3,7 @@
 module Lamdu.Infer.Internal.Unify
     ( unifyUnsafe
     ) where
+
 import           Control.Lens.Operators
 import           Control.Monad (when, unless)
 import           Control.Monad.Trans.Class (lift)
@@ -42,7 +43,7 @@ narrowSkolemScopesIn allowedSkolems (TV.TypeVars tvs rtvs stvs) =
             mapM_ (M.narrowTVScope allowedSkolems)
             (Set.toList nonSkolems)
 
-varBind :: (Eq t, M.VarKind t, Pretty t) => T.Var t -> t -> Infer ()
+varBind :: (M.VarKind t, Pretty t) => T.Var t -> t -> Infer ()
 varBind u t
     | mtTv == Just u = return ()
     | otherwise =

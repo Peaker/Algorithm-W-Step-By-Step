@@ -1,8 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, DeriveFunctor, FlexibleInstances, GeneralizedNewtypeDeriving, MultiParamTypeClasses, BangPatterns, RecordWildCards, TypeFamilies #-}
 module Lamdu.Infer.Internal.Monad
-    ( Results(..), subst, constraints, emptyResults
-    , Context(..), ctxResults, ctxState, initialContext
-    , InferState(..)
+    ( Results(..), subst, constraints
+    , Context(..), ctxResults, initialContext
     , InferCtx(..), inferCtx
     , Infer
     , throwError
@@ -10,9 +9,8 @@ module Lamdu.Infer.Internal.Monad
     , tell, tellSubst
     , tellProductConstraint
     , tellSumConstraint
-    , tellConstraints
     , listen, listenNoTell
-    , getConstraints, getSubst
+    , getSubst
     , listenSubst
 
     , getSkolems, addSkolems
@@ -308,10 +306,6 @@ freshInferredVar skolemScope = liftM TV.lift . freshInferredVarName skolemScope
 listenSubst :: Infer a -> Infer (a, Subst)
 listenSubst x = listen x <&> _2 %~ _subst
 {-# INLINE listenSubst #-}
-
-getConstraints :: Monad m => InferCtx m Constraints
-getConstraints = Infer $ State.gets (_constraints . _ctxResults)
-{-# INLINE getConstraints #-}
 
 getSubst :: Monad m => InferCtx m Subst
 getSubst = Infer $ State.gets (_subst . _ctxResults)

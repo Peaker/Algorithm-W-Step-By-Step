@@ -32,7 +32,7 @@ import           Lamdu.Calc.Val.Annotated (Val)
 import qualified Lamdu.Calc.Val as V
 import           Lamdu.Expr.Pure (($$), ($$:))
 import qualified Lamdu.Expr.Pure as P
-import           Lamdu.Infer (TypeVars(..), Loaded(..))
+import           Lamdu.Infer (TypeVars(..), Dependencies(..))
 
 {-# ANN module ("HLint: ignore Redundant $" :: String) #-}
 
@@ -218,10 +218,10 @@ infixType a b c = recordType [("l", a), ("r", b)] ~> c
 infixArgs :: Val () -> Val () -> Val ()
 infixArgs l r = P.record [("l", l), ("r", r)]
 
-env :: Loaded
+env :: Dependencies
 env =
-    Loaded
-    { loadedGlobalTypes =
+    Deps
+    { _depsGlobalTypes =
         Map.fromList
         [ ("fix",    forAll ["a"] $ \ [a] -> (a ~> a) ~> a)
         , ("if",     forAll ["a"] $ \ [a] -> recordType [("condition", boolType), ("then", a), ("else", a)] ~> a)
@@ -256,7 +256,7 @@ env =
 
         , ("stBind", forAll ["s", "a", "b"] $ \ [s, a, b] -> infixType (stOf s a) (a ~> stOf s b) (stOf s b))
         ]
-    , loadedNominals =
+    , _depsNominals =
         Map.fromList
         [ stTypePair
         , listTypePair

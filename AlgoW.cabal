@@ -42,6 +42,7 @@ library
                      , lamdu-calculus
                      , lens >=4.1
                      , transformers >=0.3 && <0.6
+  hs-source-dirs:   src
   if flag(noprettyclass)
     build-depends:     pretty >=1.1.2 && <1.2
   else
@@ -50,7 +51,7 @@ library
 
 benchmark bench-builder-all
   type:             exitcode-stdio-1.0
-  hs-source-dirs:   src
+  hs-source-dirs:   test
   main-is:          benchmark.hs
   other-modules:    TestVals
   build-depends:    AlgoW
@@ -78,7 +79,7 @@ test-suite algow-test
   main-is:             Test.hs
   other-modules:       Lamdu.Expr.Val.Arbitrary
                        TestVals
-  hs-source-dirs:      ., src
+  hs-source-dirs:      test
   build-depends:       base-compat
                      , base
                      , AlgoW

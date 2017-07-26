@@ -4,7 +4,7 @@ module Lamdu.Infer
     , TypeVars(..)
     , Dependencies(..), depsGlobalTypes, depsNominals, depTags
     , infer, inferFromNom
-    , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf
+    , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf, Scope.skolems, Scope.skolemScopeVars
     , Payload(..), plScope, plType
     , M.Context, M.initialContext
     , M.InferCtx(..), M.inferCtx, Infer

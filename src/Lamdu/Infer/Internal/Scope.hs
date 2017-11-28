@@ -28,7 +28,7 @@ import           Text.PrettyPrint (($+$), (<+>), text, nest, vcat)
 import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 import           Text.PrettyPrint.Utils (pPrintMap)
 
-import           Prelude.Compat hiding (any)
+import           Prelude.Compat
 
 newtype SkolemScope = SkolemScope { _skolemScopeVars :: TV.TypeVars }
     deriving (Generic, Show, Monoid, NFData, Binary)

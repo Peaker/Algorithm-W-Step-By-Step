@@ -3,7 +3,7 @@ module Lamdu.Infer.Internal.Constraints
     ( applySubst
     ) where
 
-import           Prelude.Compat hiding (any)
+import           Prelude.Compat
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
 import           Control.Monad (foldM)

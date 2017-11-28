@@ -6,7 +6,6 @@ module Lamdu.Infer.Internal.Scheme
     ) where
 
 import           Control.Lens.Operators
-import           Control.Monad (liftM)
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Set (Set)
@@ -33,7 +32,7 @@ makeScheme = Scheme.make . M._constraints . M._ctxResults
 mkInstantiateSubstPart ::
     (M.VarKind t, Monad m) => SkolemScope -> String -> Set (T.Var t) -> InferCtx m (Map (T.Var t) (T.Var t))
 mkInstantiateSubstPart skolemScope prefix =
-    liftM Map.fromList . mapM f . Set.toList
+    fmap Map.fromList . mapM f . Set.toList
     where
         f oldVar =
             do
@@ -59,4 +58,4 @@ instantiateWithRenames skolemScope (Scheme (TypeVars tv rv sv) constraints t) =
 
 {-# INLINE instantiate #-}
 instantiate :: Monad m => SkolemScope -> Scheme -> InferCtx m Type
-instantiate skolemScope scheme = liftM snd (instantiateWithRenames skolemScope scheme)
+instantiate skolemScope scheme = fmap snd (instantiateWithRenames skolemScope scheme)

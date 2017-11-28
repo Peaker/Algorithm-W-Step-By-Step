@@ -25,7 +25,6 @@ import           Control.Lens (Lens')
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
-import           Control.Monad (liftM)
 import           Control.Monad.Trans.State (StateT(..))
 import qualified Control.Monad.Trans.State as State
 import           Data.Map (Map)
@@ -300,7 +299,7 @@ narrowTVScope skolems varName =
 {-# INLINE narrowTVScope #-}
 
 freshInferredVar :: Monad m => VarKind t => SkolemScope -> String -> InferCtx m t
-freshInferredVar skolemScope = liftM TV.lift . freshInferredVarName skolemScope
+freshInferredVar skolemScope = fmap TV.lift . freshInferredVarName skolemScope
 {-# INLINE freshInferredVar #-}
 
 listenSubst :: Infer a -> Infer (a, Subst)

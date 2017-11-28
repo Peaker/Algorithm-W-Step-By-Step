@@ -122,9 +122,9 @@ unifyFlatPartials s0 (tfields, tname) (ufields, uname) =
         ((), s1) <-
             M.listenSubst $ varBind tname $
             Subst.apply s0 $
-            Map.foldWithKey T.CExtend restTv uniqueUFields
+            Map.foldrWithKey T.CExtend restTv uniqueUFields
         varBind uname $ Subst.apply (mappend s0 s1) $
-            Map.foldWithKey T.CExtend restTv uniqueTFields
+            Map.foldrWithKey T.CExtend restTv uniqueTFields
     where
         uniqueTFields = tfields `Map.difference` ufields
         uniqueUFields = ufields `Map.difference` tfields

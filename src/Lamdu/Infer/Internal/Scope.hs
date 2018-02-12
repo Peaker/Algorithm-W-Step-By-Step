@@ -17,7 +17,7 @@ import qualified Control.Lens as Lens
 import           Data.Binary (Binary)
 import           Data.Map (Map)
 import qualified Data.Map as Map
-import           Data.Monoid ((<>))
+import           Data.Semigroup (Semigroup(..))
 import           GHC.Generics (Generic)
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type.Vars as TV
@@ -31,7 +31,7 @@ import           Text.PrettyPrint.Utils (pPrintMap)
 import           Prelude.Compat
 
 newtype SkolemScope = SkolemScope { _skolemScopeVars :: TV.TypeVars }
-    deriving (Generic, Show, Monoid, NFData, Binary)
+    deriving (Generic, Show, Semigroup, Monoid, NFData, Binary)
 
 instance Pretty SkolemScope where
     pPrint (SkolemScope tvs) = text "Skolems:" <+> pPrint tvs

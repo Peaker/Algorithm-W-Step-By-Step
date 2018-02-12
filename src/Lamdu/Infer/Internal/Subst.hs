@@ -12,7 +12,7 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Data.Map.Utils as MapUtils
 import           Data.Maybe (fromMaybe)
-import           Data.Semigroup ((<>))
+import           Data.Semigroup (Semigroup(..))
 import           Data.Set (Set)
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
@@ -58,15 +58,18 @@ unionDisjoint m1 m2 =
             , text " vs " <> pPrint (Map.toList m2)
             ]
 
-instance Monoid Subst where
-    mempty = Subst Map.empty Map.empty Map.empty
-    mappend subst0@(Subst t0 r0 s0) subst1@(Subst t1 r1 s1)
+instance Semigroup Subst where
+    subst0@(Subst t0 r0 s0) <> subst1@(Subst t1 r1 s1)
         | null subst1 = subst0
         | otherwise =
         Subst
         (t1 `unionDisjoint` Map.map (apply subst1) t0)
         (r1 `unionDisjoint` Map.map (apply subst1) r0)
         (s1 `unionDisjoint` Map.map (apply subst1) s0)
+
+instance Monoid Subst where
+    mempty = Subst Map.empty Map.empty Map.empty
+    mappend = (<>)
 
 intersectMapSet :: Ord k => Set k -> Map k a -> Map k a
 intersectMapSet s m = Map.intersection m $ Map.fromSet (const ()) s

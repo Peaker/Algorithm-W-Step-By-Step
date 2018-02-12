@@ -14,7 +14,7 @@ Flag noprettyclass
     Description: Using pretty>=1.1.2? If so, mustn't depend on prettyclass which was inlined into the pretty package
 
 library
-  ghc-options:         -Wall -O2
+  ghc-options:         -Wall -O2 -Wnoncanonical-monad-instances -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   ghc-prof-options:    -auto-all -caf-all
   exposed-modules:     Lamdu.Expr.Lens
                      , Lamdu.Expr.Pure

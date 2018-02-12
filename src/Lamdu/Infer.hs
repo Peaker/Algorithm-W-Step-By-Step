@@ -21,7 +21,7 @@ import           Data.Binary (Binary)
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Maybe (fromMaybe)
-import           Data.Monoid ((<>))
+import           Data.Semigroup (Semigroup(..))
 import           Data.Typeable (Typeable)
 import           GHC.Generics (Generic)
 import           Lamdu.Calc.Type (Type)
@@ -72,9 +72,11 @@ instance Binary Dependencies
 
 Lens.makeLenses ''Dependencies
 
+instance Semigroup Dependencies where
+    Deps t0 n0 <> Deps t1 n1 = Deps (t0 <> t1) (n0 <> n1)
 instance Monoid Dependencies where
     mempty = Deps Map.empty Map.empty
-    mappend (Deps t0 n0) (Deps t1 n1) = Deps (mappend t0 t1) (mappend n0 n1)
+    mappend = (<>)
 
 depTags :: Lens.Setter' Dependencies T.Tag
 depTags f (Deps globals nominals) =

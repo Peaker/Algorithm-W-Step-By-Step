@@ -29,7 +29,7 @@ import           Control.Monad.Trans.State (StateT(..))
 import qualified Control.Monad.Trans.State as State
 import           Data.Map (Map)
 import qualified Data.Map as Map
-import           Data.Monoid ((<>))
+import           Data.Semigroup (Semigroup(..))
 import qualified Data.Set as Set
 import           Data.String (IsString(..))
 import           Lamdu.Calc.Type (Type)
@@ -52,10 +52,12 @@ data SkolemsInScope = SkolemsInScope
     , _sisRTVs :: Map T.ProductVar SkolemScope
     , _sisSTVs :: Map T.SumVar     SkolemScope
     }
+instance Semigroup SkolemsInScope where
+    SkolemsInScope tvs0 rtvs0 stvs0 <> SkolemsInScope tvs1 rtvs1 stvs1 =
+        SkolemsInScope (tvs0 <> tvs1) (rtvs0 <> rtvs1) (stvs0 <> stvs1)
 instance Monoid SkolemsInScope where
     mempty = SkolemsInScope mempty mempty mempty
-    mappend (SkolemsInScope tvs0 rtvs0 stvs0) (SkolemsInScope tvs1 rtvs1 stvs1) =
-        SkolemsInScope (tvs0 <> tvs1) (rtvs0 <> rtvs1) (stvs0 <> stvs1)
+    mappend = (<>)
 
 sisTVs :: Lens' SkolemsInScope (Map T.TypeVar SkolemScope)
 sisTVs f SkolemsInScope {..} = f _sisTVs <&> \_sisTVs -> SkolemsInScope {..}

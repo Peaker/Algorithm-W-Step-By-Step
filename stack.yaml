@@ -1,9 +1,9 @@
-resolver: nightly-2017-11-27
+resolver: lts-10.5
 packages:
 - '.'
 - location:
     git: https://github.com/lamdu/lamdu-calculus
-    commit: 753fb81d50abf622da907420f1956ec12542cfa9
+    commit: 94f91c37acbc4a98b7a150b94cb645f6d955f865
   extra-dep: True
 extra-deps: []
 flags: {}

@@ -19,7 +19,7 @@ import qualified Lamdu.Infer.Update as Update
 import qualified Test.Framework as TestFramework
 import           Test.Framework.Providers.QuickCheck2 (testProperty)
 import           TestVals
-import           Text.PrettyPrint ((<>), (<+>), ($+$))
+import           Text.PrettyPrint ((<+>), ($+$))
 import qualified Text.PrettyPrint as PP
 import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 
@@ -167,7 +167,7 @@ runAndPrint e =
                       runState (traverse (tag . _plType . fst) val) (0::Int, M.empty)
                 print $ pPrint taggedVal
                 let indent = PP.hcat $ replicate 4 PP.space
-                mapM_ (\(k, t) -> print $ indent <> pPrint k <+> "=" <+> pPrint t) $ M.toList types
+                mapM_ (\(k, t) -> print $ indent PP.<> pPrint k <+> "=" <+> pPrint t) $ M.toList types
 
 inferType :: Scope -> Val a -> Infer (Type, Val (Payload, a))
 inferType scope e =

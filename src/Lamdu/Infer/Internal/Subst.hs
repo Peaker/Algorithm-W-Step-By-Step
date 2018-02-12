@@ -12,13 +12,14 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Data.Map.Utils as MapUtils
 import           Data.Maybe (fromMaybe)
+import           Data.Semigroup ((<>))
 import           Data.Set (Set)
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
 import           Lamdu.Calc.Type.Scheme (Scheme(..))
 import           Lamdu.Calc.Type.Vars (TypeVars(..))
 import qualified Lamdu.Calc.Type.Vars as TypeVars
-import           Text.PrettyPrint (nest, text, vcat, (<>), ($+$))
+import           Text.PrettyPrint (nest, text, vcat, ($+$))
 import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 import           Text.PrettyPrint.Utils (pPrintMap)
 

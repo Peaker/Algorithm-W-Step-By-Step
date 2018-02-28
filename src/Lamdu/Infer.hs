@@ -145,10 +145,7 @@ inferLeaf globals leaf = \_go locals ->
             Nothing -> M.throwError $ Err.UnboundVariable n
     V.LLiteral (V.PrimVal p _) -> return $ T.TInst p Map.empty
     V.LRecEmpty -> return $ T.TRecord T.CEmpty
-    V.LAbsurd ->
-        do
-            tv <- freshInferredVar locals "a"
-            return $ T.TFun (T.TSum T.CEmpty) tv
+    V.LAbsurd -> freshInferredVar locals "a" <&> T.TFun (T.TSum T.CEmpty)
     <&> (,) (V.BLeaf leaf)
 
 {-# INLINE inferAbs #-}

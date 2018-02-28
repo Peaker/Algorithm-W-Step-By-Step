@@ -150,11 +150,11 @@ valBodyLiteral :: Prism' (V.Body expr) V.PrimVal
 valBodyLiteral = V._BLeaf . V._LLiteral
 
 {-# INLINE valLeafs #-}
-valLeafs :: Traversal' (Val a) V.Leaf
+valLeafs :: Lens.IndexedTraversal' a (Val a) V.Leaf
 valLeafs f (Val pl body) =
     case body of
-    V.BLeaf l -> f l <&> V.BLeaf
-    _ -> body & Lens.traverse . valLeafs %%~ f
+    V.BLeaf l -> Lens.indexed f pl l <&> V.BLeaf
+    _ -> (Lens.traverse . valLeafs) f body
     <&> Val pl
 
 {-# INLINE compositeFields #-}
@@ -236,16 +236,16 @@ valTags :: Lens.Traversal' (Val a) T.Tag
 valTags f = Val.body $ biTraverseBodyTags f (valTags f)
 
 {-# INLINE valGlobals #-}
-valGlobals :: Set V.Var -> Lens.Fold (Val a) V.Var
+valGlobals :: Set V.Var -> Lens.IndexedFold a (Val a) V.Var
 valGlobals scope f (Val pl body) =
     case body of
     V.BLeaf (V.LVar v)
         | Set.member v scope -> V.LVar v & V.BLeaf & pure
-        | otherwise -> f v <&> V.LVar <&> V.BLeaf
+        | otherwise -> Lens.indexed f pl v <&> V.LVar <&> V.BLeaf
     V.BLam (V.Lam var lamBody) ->
         valGlobals (Set.insert var scope) f lamBody
         <&> V.Lam var <&> V.BLam
-    _ -> body & Lens.traverse . valGlobals scope %%~ f
+    _ -> (Lens.traverse . valGlobals scope) f body
     <&> Val pl
 
 {-# INLINE valNominals #-}

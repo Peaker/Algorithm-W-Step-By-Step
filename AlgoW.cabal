@@ -15,7 +15,7 @@ Flag noprettyclass
 
 library
   ghc-options:         -Wall -O2 -Wnoncanonical-monad-instances -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
-  ghc-prof-options:    -auto-all -caf-all
+  ghc-prof-options:    -fprof-auto -fprof-cafs
   exposed-modules:     Lamdu.Expr.Lens
                      , Lamdu.Expr.Pure
                      , Lamdu.Infer
@@ -68,13 +68,13 @@ benchmark bench-builder-all
   else
     build-depends:     pretty, prettyclass
   ghc-options:         -Wall -O2
-  ghc-prof-options:    -auto-all -caf-all -rtsopts
+  ghc-prof-options:    -fprof-auto -fprof-cafs -rtsopts
   default-language:    Haskell2010
 
 test-suite algow-test
   type:                exitcode-stdio-1.0
   ghc-options:         -Wall
-  ghc-prof-options:    -auto-all -caf-all -rtsopts
+  ghc-prof-options:    -fprof-auto -fprof-cafs -rtsopts
   main-is:             Test.hs
   other-modules:       Lamdu.Expr.Val.Arbitrary
                        TestVals

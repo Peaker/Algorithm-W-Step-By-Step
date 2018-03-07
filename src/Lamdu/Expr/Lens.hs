@@ -64,7 +64,7 @@ nextLayer _ (T.TVar tv) = pure (T.TVar tv)
 nextLayer f (T.TFun a r) = T.TFun <$> f a <*> f r
 nextLayer f (T.TInst tid m) = T.TInst tid <$> Lens.traverse f m
 nextLayer f (T.TRecord p) = T.TRecord <$> compositeTypes f p
-nextLayer f (T.TSum s) = T.TSum <$> compositeTypes f s
+nextLayer f (T.TVariant s) = T.TVariant <$> compositeTypes f s
 
 {-# INLINE typeTIds #-}
 typeTIds :: Lens.Traversal' Type T.NominalId
@@ -82,7 +82,7 @@ schemeTags f (Scheme tvs constraints typ) =
 {-# INLINE typeTags #-}
 typeTags :: Lens.Traversal' Type T.Tag
 typeTags f (T.TRecord composite) = T.TRecord <$> compositeTags f composite
-typeTags f (T.TSum composite) = T.TSum <$> compositeTags f composite
+typeTags f (T.TVariant composite) = T.TVariant <$> compositeTags f composite
 typeTags f x = nextLayer (typeTags f) x
 
 {-# INLINE compositeVarConstraintsTagsSet #-}

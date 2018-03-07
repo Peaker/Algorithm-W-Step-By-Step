@@ -179,7 +179,7 @@ instance Unify Type where
     unifyGeneric (T.TVar u) t                =  varBind u t
     unifyGeneric t (T.TVar u)                =  varBind u t
     unifyGeneric (T.TRecord x) (T.TRecord y) =  unifyGeneric x y
-    unifyGeneric (T.TSum x)    (T.TSum y)    =  unifyGeneric x y
+    unifyGeneric (T.TVariant x)    (T.TVariant y)    =  unifyGeneric x y
     unifyGeneric t1 t2                       =  dontUnify t1 t2
 
 instance M.CompositeHasVar p => Unify (T.Composite p) where

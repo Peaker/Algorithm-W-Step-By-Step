@@ -27,8 +27,8 @@ type SubSubst t = Map (T.Var t) t
 
 data Subst = Subst
     { substTypes :: SubSubst Type
-    , substRecordTypes :: SubSubst T.Product
-    , substSumTypes :: SubSubst T.Sum
+    , substRecordTypes :: SubSubst T.Record
+    , substSumTypes :: SubSubst T.Variant
     } deriving Show
 
 instance Pretty Subst where
@@ -99,7 +99,7 @@ instance CanSubst Type where
     apply s (T.TInst n p)   = T.TInst n $ apply s <$> p
     apply s (T.TFun t1 t2)  = T.TFun (apply s t1) (apply s t2)
     apply s (T.TRecord r)   = T.TRecord $ apply s r
-    apply s (T.TSum r)      = T.TSum $ apply s r
+    apply s (T.TVariant r)      = T.TVariant $ apply s r
 
 remove :: TypeVars -> Subst -> Subst
 remove (TypeVars tvs rtvs stvs) (Subst subT subR subS) =
@@ -123,13 +123,13 @@ instance HasVar Type where
     {-# INLINE lookup #-}
     lookup tv s = Map.lookup tv (substTypes s)
 
-instance CompositeHasVar T.ProductTag where
+instance CompositeHasVar T.RecordTag where
     {-# INLINE compositeGet #-}
     compositeGet = substRecordTypes
     {-# INLINE compositeNew #-}
     compositeNew v = mempty { substRecordTypes = v }
 
-instance CompositeHasVar T.SumTag where
+instance CompositeHasVar T.VariantTag where
     {-# INLINE compositeGet #-}
     compositeGet = substSumTypes
     {-# INLINE compositeNew #-}

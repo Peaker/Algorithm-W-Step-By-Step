@@ -3,7 +3,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/lamdu/lamdu-calculus
-    commit: 94f91c37acbc4a98b7a150b94cb645f6d955f865
+    commit: 560de341a268b51e51d745007adb3270eb9f5d5d
   extra-dep: True
 extra-deps: []
 flags: {}

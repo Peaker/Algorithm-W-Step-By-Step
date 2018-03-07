@@ -7,8 +7,8 @@ module Lamdu.Infer.Internal.Monad
     , throwError
 
     , tell, tellSubst
-    , tellProductConstraint
-    , tellSumConstraint
+    , tellRecordConstraint
+    , tellVariantConstraint
     , listen, listenNoTell
     , getSubst
     , listenSubst
@@ -49,8 +49,8 @@ import           Prelude.Compat
 
 data SkolemsInScope = SkolemsInScope
     { _sisTVs  :: Map T.TypeVar    SkolemScope
-    , _sisRTVs :: Map T.ProductVar SkolemScope
-    , _sisSTVs :: Map T.SumVar     SkolemScope
+    , _sisRTVs :: Map T.RecordVar SkolemScope
+    , _sisSTVs :: Map T.VariantVar     SkolemScope
     }
 instance Semigroup SkolemsInScope where
     SkolemsInScope tvs0 rtvs0 stvs0 <> SkolemsInScope tvs1 rtvs1 stvs1 =
@@ -63,20 +63,20 @@ sisTVs :: Lens' SkolemsInScope (Map T.TypeVar SkolemScope)
 sisTVs f SkolemsInScope {..} = f _sisTVs <&> \_sisTVs -> SkolemsInScope {..}
 {-# INLINE sisTVs #-}
 
-sisRTVs :: Lens' SkolemsInScope (Map T.ProductVar SkolemScope)
+sisRTVs :: Lens' SkolemsInScope (Map T.RecordVar SkolemScope)
 sisRTVs f SkolemsInScope {..} = f _sisRTVs <&> \_sisRTVs -> SkolemsInScope {..}
 {-# INLINE sisRTVs #-}
 
-sisSTVs :: Lens' SkolemsInScope (Map T.SumVar SkolemScope)
+sisSTVs :: Lens' SkolemsInScope (Map T.VariantVar SkolemScope)
 sisSTVs f SkolemsInScope {..} = f _sisSTVs <&> \_sisSTVs -> SkolemsInScope {..}
 {-# INLINE sisSTVs #-}
 
 class Subst.CompositeHasVar p => CompositeHasVar p where
     compositeSkolemsInScopeMap :: Lens' SkolemsInScope (Map (T.Var (T.Composite p)) SkolemScope)
-instance CompositeHasVar T.ProductTag where
+instance CompositeHasVar T.RecordTag where
     compositeSkolemsInScopeMap = sisRTVs
     {-# INLINE compositeSkolemsInScopeMap #-}
-instance CompositeHasVar T.SumTag where
+instance CompositeHasVar T.VariantTag where
     compositeSkolemsInScopeMap = sisSTVs
     {-# INLINE compositeSkolemsInScopeMap #-}
 
@@ -230,21 +230,21 @@ tellConstraints :: Constraints -> Infer ()
 tellConstraints x = tell $ emptyResults { _constraints = x }
 {-# INLINE tellConstraints #-}
 
-tellProductConstraint :: T.ProductVar -> T.Tag -> Infer ()
-tellProductConstraint v tag =
+tellRecordConstraint :: T.RecordVar -> T.Tag -> Infer ()
+tellRecordConstraint v tag =
     tellConstraints $ mempty
-    { productVarConstraints =
+    { recordVarConstraints =
       CompositeVarConstraints $ Map.singleton v $ Set.singleton tag
     }
-{-# INLINE tellProductConstraint #-}
+{-# INLINE tellRecordConstraint #-}
 
-tellSumConstraint :: T.SumVar -> T.Tag -> Infer ()
-tellSumConstraint v tag =
+tellVariantConstraint :: T.VariantVar -> T.Tag -> Infer ()
+tellVariantConstraint v tag =
     tellConstraints $ mempty
-    { sumVarConstraints =
+    { variantVarConstraints =
       CompositeVarConstraints $ Map.singleton v $ Set.singleton tag
     }
-{-# INLINE tellSumConstraint #-}
+{-# INLINE tellVariantConstraint #-}
 
 listen :: Infer a -> Infer (a, Results)
 listen (Infer (StateT act)) =

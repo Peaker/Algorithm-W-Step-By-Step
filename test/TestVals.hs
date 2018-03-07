@@ -47,7 +47,7 @@ eLet name val mkBody = P.app (P.abs name body) val
 letItem :: V.Var -> Val () -> (Val () -> Val ()) -> Val ()
 letItem name val mkBody = P.lambda name mkBody $$ val
 
-openRecordType :: T.ProductVar -> [(T.Tag, Type)] -> Type
+openRecordType :: T.RecordVar -> [(T.Tag, Type)] -> Type
 openRecordType tv = T.TRecord . foldr (uncurry T.CExtend) (T.CVar tv)
 
 recordType :: [(T.Tag, Type)] -> Type
@@ -78,7 +78,7 @@ listTypePair =
             T.CEmpty
             & T.CExtend "[]" (recordType [])
             & T.CExtend ":" (recordType [("head", tv), ("tail", listOf tv)])
-            & T.TSum
+            & T.TVariant
             & Scheme.mono
             & NominalType
         }
@@ -105,7 +105,7 @@ boolTypePair =
             T.CEmpty
             & T.CExtend "True" (recordType [])
             & T.CExtend "False" (recordType [])
-            & T.TSum
+            & T.TVariant
             & Scheme.mono
             & NominalType
         }
@@ -175,7 +175,7 @@ ignoredParamTypePair =
         }
     )
 
-xGetter :: (T.ProductVar -> Constraints) -> Nominal
+xGetter :: (T.RecordVar -> Constraints) -> Nominal
 xGetter constraints =
     Nominal
     { _nomParams = Map.empty
@@ -184,7 +184,7 @@ xGetter constraints =
         openRecordType tvRest [("x", ta)] ~> ta
     }
     where
-        tvRest :: T.ProductVar
+        tvRest :: T.RecordVar
         tvRest = "rest"
 
 xGetterPair :: (T.NominalId, Nominal)
@@ -199,7 +199,7 @@ xGetterPairConstrained =
     , xGetter $
       \tvRest ->
           mempty
-          { productVarConstraints =
+          { recordVarConstraints =
               CompositeVarConstraints $ Map.singleton tvRest $
               Set.fromList ["x", "y"]
           }
@@ -208,7 +208,7 @@ xGetterPairConstrained =
 
 maybeOf :: Type -> Type
 maybeOf t =
-    T.TSum $
+    T.TVariant $
     T.CExtend "Nothing" (recordType []) $
     T.CExtend "Just" t T.CEmpty
 

@@ -145,7 +145,7 @@ inferLeaf globals leaf = \_go locals ->
             Nothing -> M.throwError $ Err.UnboundVariable n
     V.LLiteral (V.PrimVal p _) -> return $ T.TInst p Map.empty
     V.LRecEmpty -> return $ T.TRecord T.CEmpty
-    V.LAbsurd -> freshInferredVar locals "a" <&> T.TFun (T.TSum T.CEmpty)
+    V.LAbsurd -> freshInferredVar locals "a" <&> T.TFun (T.TVariant T.CEmpty)
     <&> (,) (V.BLeaf leaf)
 
 {-# INLINE inferAbs #-}
@@ -179,7 +179,7 @@ inferGetField (V.GetField e name) = \go locals ->
         (p1_t, e') <- go locals e
         p1_tv <- freshInferredVar locals "a"
         p1_tvRecName <- freshInferredVarName locals "r"
-        M.tellProductConstraint p1_tvRecName name
+        M.tellRecordConstraint p1_tvRecName name
 
         ((), p2_s) <-
             M.listenSubst $ unifyUnsafe p1_t $
@@ -192,11 +192,11 @@ inferInject :: V.Inject a -> InferHandler a b
 inferInject (V.Inject name e) = \go locals ->
     do
         (t, e') <- go locals e
-        tvSumName <- freshInferredVarName locals "s"
-        M.tellSumConstraint tvSumName name
+        tvVariantName <- freshInferredVarName locals "s"
+        M.tellVariantConstraint tvVariantName name
         return
             ( V.BInject (V.Inject name e')
-            , T.TSum $ T.CExtend name t $ TV.lift tvSumName
+            , T.TVariant $ T.CExtend name t $ TV.lift tvVariantName
             )
 
 {-# INLINE inferCase #-}
@@ -220,23 +220,23 @@ inferCase (V.Case name m mm) = \go locals ->
             p3_tvRes = p3 p2_tvRes
             p3_tmm   = p3 p2_tmm
         -- p3
-        -- new sum type var "s":
-        tvSumName <- freshInferredVarName locals "s"
-        M.tellSumConstraint tvSumName name
-        let p3_tvSum = TV.lift tvSumName
+        -- new variant type var "s":
+        tvVariantName <- freshInferredVarName locals "s"
+        M.tellVariantConstraint tvVariantName name
+        let p3_tvVariant = TV.lift tvVariantName
         -- type(mismatch) `unify` [ s ]->res
         ((), p4_s) <-
             M.listenSubst $ unifyUnsafe p3_tmm $
-            T.TFun (T.TSum p3_tvSum) p3_tvRes
+            T.TFun (T.TVariant p3_tvVariant) p3_tvRes
         let p4 :: CanSubst a => a -> a
             p4 = Subst.apply p4_s
-            p4_tvSum = p4 p3_tvSum
-            p4_tvRes = p4 p3_tvRes
-            p4_tv    = p4 p3_tv
+            p4_tvVariant = p4 p3_tvVariant
+            p4_tvRes     = p4 p3_tvRes
+            p4_tv        = p4 p3_tv
         -- p4
         return
             ( V.BCase (V.Case name m' mm')
-            , T.TFun (T.TSum (T.CExtend name p4_tv p4_tvSum)) p4_tvRes
+            , T.TFun (T.TVariant (T.CExtend name p4_tv p4_tvVariant)) p4_tvRes
             )
 
 {-# INLINE inferRecExtend #-}
@@ -255,10 +255,10 @@ inferRecExtend (V.RecExtend name e1 e2) = \go locals ->
                 case hasTag name x of
                 HasTag -> M.throwError $ Err.DuplicateField name x
                 DoesNotHaveTag -> return x
-                MayHaveTag var -> x <$ M.tellProductConstraint var name
+                MayHaveTag var -> x <$ M.tellRecordConstraint var name
             _ -> do
                 tv <- freshInferredVarName locals "r"
-                M.tellProductConstraint tv name
+                M.tellRecordConstraint tv name
                 let tve = TV.lift tv
                 ((), s) <- M.listenSubst $ unifyUnsafe t2 $ T.TRecord tve
                 return $ Subst.apply s tve

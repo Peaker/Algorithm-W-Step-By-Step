@@ -32,7 +32,7 @@ library
                      , Lamdu.Infer.Internal.Unify
                      , Data.Map.Utils
   default-language:    Haskell2010
-  build-depends:       base-compat >= 0.8.2 && < 0.10
+  build-depends:       base-compat >= 0.8.2 && < 0.11
                      , base >=4.7
                      , binary >=0.7 && <0.10
                      , bytestring >=0.10 && <0.11

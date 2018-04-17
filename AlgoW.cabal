@@ -76,8 +76,7 @@ test-suite algow-test
   ghc-options:         -Wall
   ghc-prof-options:    -fprof-auto -fprof-cafs -rtsopts
   main-is:             Test.hs
-  other-modules:       Lamdu.Expr.Val.Arbitrary
-                       TestVals
+  other-modules:       TestVals
   hs-source-dirs:      test
   build-depends:       base-compat
                      , base

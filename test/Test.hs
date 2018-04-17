@@ -10,9 +10,9 @@ import qualified Data.Map as M
 import           Lamdu.Calc.Type ((~>), Type(..), Composite(..))
 import           Lamdu.Calc.Val.Annotated (Val(..))
 import qualified Lamdu.Calc.Val.Annotated as Val
+import           Lamdu.Calc.Val.Annotated.Arbitrary ()
 import           Lamdu.Expr.Pure (($$), ($=), ($.))
 import qualified Lamdu.Expr.Pure as P
-import           Lamdu.Expr.Val.Arbitrary ()
 import           Lamdu.Infer
 import           Lamdu.Infer.Unify
 import qualified Lamdu.Infer.Update as Update

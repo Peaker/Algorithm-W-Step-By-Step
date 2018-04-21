@@ -2,7 +2,7 @@
 module Lamdu.Infer
     ( makeScheme
     , TypeVars(..)
-    , Dependencies(..), depsGlobalTypes, depsNominals, depTags
+    , Dependencies(..), depsGlobalTypes, depsNominals, depSchemes
     , infer, inferFromNom
     , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf, Scope.skolems, Scope.skolemScopeVars
     , Payload(..), plScope, plType
@@ -32,7 +32,6 @@ import           Lamdu.Calc.Type.Vars (TypeVars(..))
 import qualified Lamdu.Calc.Type.Vars as TV
 import qualified Lamdu.Calc.Val as V
 import           Lamdu.Calc.Val.Annotated (Val(..))
-import           Lamdu.Expr.Lens (schemeTags)
 import qualified Lamdu.Infer.Error as Err
 import           Lamdu.Infer.Internal.Monad (Infer)
 import qualified Lamdu.Infer.Internal.Monad as M
@@ -78,11 +77,11 @@ instance Monoid Dependencies where
     mempty = Deps Map.empty Map.empty
     mappend = (<>)
 
-depTags :: Lens.Setter' Dependencies T.Tag
-depTags f (Deps globals nominals) =
+depSchemes :: Lens.Traversal' Dependencies Scheme
+depSchemes f (Deps globals nominals) =
     Deps
-    <$> (traverse . schemeTags) f globals
-    <*> (traverse . nomType . _NominalType . schemeTags) f nominals
+    <$> traverse f globals
+    <*> (traverse . nomType . _NominalType) f nominals
 
 inferSubst :: Dependencies -> Scope -> Val a -> Infer (Scope, Val (Payload, a))
 inferSubst deps rootScope val =

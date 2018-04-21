@@ -23,7 +23,7 @@ module Lamdu.Expr.Lens
     , payloadsIndexedByPath
     , payloadsOf
     -- Type traversals:
-    , schemeTags
+    , schemeTags, schemeGetTags
     , compositeTypes
     , compositeTags
     , compositeFieldTags, compositeFields
@@ -78,6 +78,13 @@ schemeTags f (Scheme tvs constraints typ) =
     Scheme tvs
     <$> (constraintsTagsSet . setmapped) f constraints
     <*> typeTags f typ
+
+schemeGetTags :: Lens.Fold Scheme T.Tag
+schemeGetTags =
+    Lens.folding $
+    \(Scheme _tvs constraints typ) ->
+    constraints ^.. constraintsTagsSet . Lens.folded
+    ++ typ ^.. typeTags
 
 {-# INLINE typeTags #-}
 typeTags :: Lens.Traversal' Type T.Tag

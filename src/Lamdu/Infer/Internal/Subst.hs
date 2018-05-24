@@ -29,7 +29,7 @@ data Subst = Subst
     { substTypes :: SubSubst Type
     , substRecordTypes :: SubSubst T.Record
     , substSumTypes :: SubSubst T.Variant
-    } deriving Show
+    } deriving (Eq, Ord, Show)
 
 instance Pretty Subst where
     pPrint (Subst t r s) =

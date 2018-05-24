@@ -31,7 +31,7 @@ import           Text.PrettyPrint.Utils (pPrintMap)
 import           Prelude.Compat
 
 newtype SkolemScope = SkolemScope { _skolemScopeVars :: TV.TypeVars }
-    deriving (Generic, Show, Semigroup, Monoid, NFData, Binary)
+    deriving (Generic, Show, Semigroup, Monoid, NFData, Binary, Eq, Ord)
 
 instance Pretty SkolemScope where
     pPrint (SkolemScope tvs) = text "Skolems:" <+> pPrint tvs
@@ -47,7 +47,7 @@ skolemScopeIntersection (SkolemScope a) (SkolemScope b) =
 data Scope = Scope
     { scopeSkolems :: SkolemScope
     , scopeTypeOfVar :: Map V.Var Type
-    } deriving (Generic, Show)
+    } deriving (Generic, Show, Eq, Ord)
 instance NFData Scope
 instance Binary Scope
 

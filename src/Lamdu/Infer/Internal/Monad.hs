@@ -49,9 +49,9 @@ import           Prelude.Compat
 
 data SkolemsInScope = SkolemsInScope
     { _sisTVs  :: Map T.TypeVar    SkolemScope
-    , _sisRTVs :: Map T.RecordVar SkolemScope
-    , _sisSTVs :: Map T.VariantVar     SkolemScope
-    }
+    , _sisRTVs :: Map T.RecordVar  SkolemScope
+    , _sisSTVs :: Map T.VariantVar SkolemScope
+    } deriving (Eq, Ord)
 instance Semigroup SkolemsInScope where
     SkolemsInScope tvs0 rtvs0 stvs0 <> SkolemsInScope tvs1 rtvs1 stvs1 =
         SkolemsInScope (tvs0 <> tvs1) (rtvs0 <> rtvs1) (stvs0 <> stvs1)
@@ -96,7 +96,7 @@ data InferState = InferState
     , _inferSkolems :: {-# UNPACK #-}!TV.TypeVars
     , _inferSkolemConstraints :: {-# UNPACK #-}!Constraints
     , _inferSkolemsInScope :: {-# UNPACK #-}!SkolemsInScope
-    }
+    } deriving (Eq, Ord)
 
 inferSupply :: Lens' InferState Int
 inferSupply f InferState {..} = f _inferSupply <&> \_inferSupply -> InferState {..}
@@ -117,7 +117,7 @@ inferSkolemsInScope f InferState {..} = f _inferSkolemsInScope <&> \_inferSkolem
 data Results = Results
     { _subst :: {-# UNPACK #-} !Subst
     , _constraints :: !Constraints
-    }
+    } deriving (Eq, Ord)
 
 subst :: Lens' Results Subst
 subst f Results {..} = f _subst <&> \_subst -> Results {..}
@@ -158,7 +158,7 @@ appendResults (Context (Results s0 c0) state) (Results s1 c1) =
 data Context = Context
     { _ctxResults :: {-# UNPACK #-} !Results
     , _ctxState :: {-# UNPACK #-} !InferState
-    }
+    } deriving (Eq, Ord)
 
 ctxResults :: Lens' Context Results
 ctxResults f Context {..} = f _ctxResults <&> \_ctxResults -> Context {..}

@@ -65,7 +65,7 @@ instance CanSubst Payload where
 data Dependencies = Deps
     { _depsGlobalTypes :: Map V.Var Scheme
     , _depsNominals :: Map T.NominalId Nominal
-    } deriving (Generic, Show)
+    } deriving (Generic, Show, Eq, Ord)
 instance NFData Dependencies
 instance Binary Dependencies
 

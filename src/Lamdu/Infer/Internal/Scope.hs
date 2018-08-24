@@ -19,9 +19,9 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Semigroup (Semigroup(..))
 import           GHC.Generics (Generic)
+import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type.Vars as TV
-import qualified Lamdu.Calc.Val as V
 import           Lamdu.Infer.Internal.Subst (CanSubst(..))
 import qualified Lamdu.Infer.Internal.Subst as Subst
 import           Text.PrettyPrint (($+$), (<+>), text, nest, vcat)

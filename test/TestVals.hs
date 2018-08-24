@@ -22,6 +22,8 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import qualified Data.Set as Set
+import           Lamdu.Calc.Term (Val)
+import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type, (~>))
 import qualified Lamdu.Calc.Type as T
 import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..))
@@ -29,8 +31,6 @@ import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..))
 import           Lamdu.Calc.Type.Scheme (Scheme(..))
 import qualified Lamdu.Calc.Type.Scheme as Scheme
 import qualified Lamdu.Calc.Type.Vars as TV
-import           Lamdu.Calc.Val.Annotated (Val)
-import qualified Lamdu.Calc.Val as V
 import           Lamdu.Expr.Pure (($$), ($$:))
 import qualified Lamdu.Expr.Pure as P
 import           Lamdu.Infer (TypeVars(..), Dependencies(..))

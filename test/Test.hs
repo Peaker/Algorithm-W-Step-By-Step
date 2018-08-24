@@ -5,13 +5,15 @@ import           Prelude.Compat hiding (any)
 import           Control.Lens (zoom)
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
+import           Control.Monad (join)
 import           Control.Monad.State (StateT(..), runState, modify, get)
 import           Data.Foldable (traverse_)
 import qualified Data.Map as M
+import           Data.Tree.Diverse (_Node, ann, annotations)
+import           Lamdu.Calc.Term (Val)
+import           Lamdu.Calc.Term.Arbitrary ()
+import           Lamdu.Calc.Term.Eq (alphaEq)
 import           Lamdu.Calc.Type ((~>), Type(..), Composite(..))
-import           Lamdu.Calc.Val.Annotated (Val(..))
-import qualified Lamdu.Calc.Val.Annotated as Val
-import           Lamdu.Calc.Val.Annotated.Arbitrary ()
 import           Lamdu.Expr.Pure (($$), ($=), ($.))
 import qualified Lamdu.Expr.Pure as P
 import           Lamdu.Infer
@@ -153,27 +155,28 @@ runAndPrint :: Val a -> Infer (Type, Val (Payload, b)) -> IO ()
 runAndPrint e =
     printResult . (`runStateT` initialContext) . run
     where
-        printResult (Left err) = print (Val.pPrintUnannotated e $+$ pPrint err)
-        printResult (Right ((typ, val), finalContext)) =
+        printResult (Left err) = print (pPrintUnannotated e $+$ pPrint err)
+        printResult (Right ((typ, bod), finalContext)) =
             do
                 let scheme = makeScheme finalContext typ
-                print $ Val.pPrintUnannotated val <+> PP.text "::" <+> pPrint scheme
+                print $ pPrintUnannotated bod <+> PP.text "::" <+> pPrint scheme
                 let next = modify (+1) >> get
                     tag x =
                       do  n <- zoom _1 next
                           zoom _2 $ modify $ M.insert n x
                           pure n
                 let (taggedVal, (_, types)) =
-                      runState (traverse (tag . _plType . fst) val) (0::Int, M.empty)
+                      runState (annotations (tag . _plType . fst) bod) (0::Int, M.empty)
                 print $ pPrint taggedVal
                 let indent = PP.hcat $ replicate 4 PP.space
                 traverse_ (\(k, t) -> print $ indent PP.<> pPrint k <+> "=" <+> pPrint t) $ M.toList types
+        pPrintUnannotated x = x & annotations .~ () & pPrint
 
 inferType :: Scope -> Val a -> Infer (Type, Val (Payload, a))
 inferType scope e =
     do
         e' <- infer env scope e
-        let t = e' ^. Val.payload . _1 . plType
+        let t = e' ^. _Node . ann . _1 . plType
         pure (t, e')
 
 test :: Val () -> IO ()
@@ -191,7 +194,7 @@ testUnify x y =
         printResult (Right (res, _ctx)) = print $ printCase $+$ pPrint res
 
 prop_alphaEq :: Val () -> Bool
-prop_alphaEq v = v `Val.alphaEq` v
+prop_alphaEq = join alphaEq
 
 -- TODO: prop that top-level type equals the result type in scheme
 

@@ -22,16 +22,17 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Maybe (fromMaybe)
 import           Data.Semigroup (Semigroup(..))
+import           Data.Tree.Diverse (Node(..), Ann(..), annotations)
 import           Data.Typeable (Typeable)
 import           GHC.Generics (Generic)
+import           Lamdu.Calc.Term (Val)
+import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
 import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..), _NominalType, nomParams, nomType)
 import           Lamdu.Calc.Type.Scheme (Scheme)
 import           Lamdu.Calc.Type.Vars (TypeVars(..))
 import qualified Lamdu.Calc.Type.Vars as TV
-import qualified Lamdu.Calc.Val as V
-import           Lamdu.Calc.Val.Annotated (Val(..))
 import qualified Lamdu.Infer.Error as Err
 import           Lamdu.Infer.Internal.Monad (Infer)
 import qualified Lamdu.Infer.Internal.Monad as M
@@ -89,7 +90,7 @@ inferSubst deps rootScope val =
         prevSubst <- M.getSubst
         let rootScope' = Subst.apply prevSubst rootScope
         (inferredVal, s) <- M.listenSubst $ inferInternal mkPayload deps rootScope' val
-        pure (rootScope', inferredVal <&> _1 %~ Subst.apply s)
+        pure (rootScope', inferredVal & annotations . _1 %~ Subst.apply s)
     where
         mkPayload typ scope dat = (Payload typ scope, dat)
 
@@ -115,8 +116,8 @@ hasTag tag (T.CExtend t _ r)
     | otherwise = hasTag tag r
 
 type InferHandler a b =
-    (Scope -> a -> Infer (Type, b)) -> Scope ->
-    M.Infer (V.Body b, Type)
+    (Scope -> a -> Infer (Type, Node (Ann b) V.Term)) -> Scope ->
+    M.Infer (V.Term (Ann b), Type)
 
 {-# INLINE freshInferredVar #-}
 freshInferredVar :: (M.VarKind t, Monad m) => Scope -> String -> M.InferCtx m t
@@ -333,7 +334,7 @@ inferInternal ::
 inferInternal f deps =
     (fmap . fmap) snd . go
     where
-        go locals (Val pl body) =
+        go locals (Node (Ann pl body)) =
             ( case body of
               V.BLeaf leaf -> inferLeaf (deps ^. depsGlobalTypes) leaf
               V.BLam lam -> inferAbs lam
@@ -345,4 +346,4 @@ inferInternal f deps =
               V.BFromNom nom -> inferFromNom (deps ^. depsNominals) nom
               V.BToNom nom -> inferToNom (deps ^. depsNominals) nom
             ) go locals
-            <&> \(body', typ) -> (typ, Val (f typ locals pl) body')
+            <&> \(body', typ) -> (typ, Node (Ann (f typ locals pl) body'))

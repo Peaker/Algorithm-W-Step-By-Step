@@ -376,10 +376,9 @@ factorsVal =
     where
         fix_ f = P.var "fix" $$ P.lambda "loop" f
         if_ b t f =
-            ( nullaryCase "False" f $
-              nullaryCase "True" t $
-              P.absurd
-            ) $$ P.fromNom "Bool" b
+            nullaryCase "False" f
+            (nullaryCase "True" t P.absurd)
+            $$ P.fromNom "Bool" b
         nullaryCase tag handler = P._case tag (defer handler)
         defer = P.lambda "_" . const
         (%>) = inf ">"

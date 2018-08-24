@@ -40,12 +40,12 @@ narrowSkolemScopesIn allowedSkolems (TV.TypeVars tvs rtvs stvs) =
     narrow tvs >> narrow rtvs >> narrow stvs
     where
         narrow nonSkolems =
-            mapM_ (M.narrowTVScope allowedSkolems)
+            Foldable.traverse_ (M.narrowTVScope allowedSkolems)
             (Set.toList nonSkolems)
 
 varBind :: (M.VarKind t, Pretty t) => T.Var t -> t -> Infer ()
 varBind u t
-    | mtTv == Just u = return ()
+    | mtTv == Just u = pure ()
     | otherwise =
         do
             allSkolems <- M.getSkolems
@@ -137,14 +137,14 @@ unifyFlatFulls tfields ufields
         Err.TypesDoNotUnity
         (pPrint (closedRecord tfields))
         (pPrint (closedRecord ufields))
-    | otherwise = return mempty
+    | otherwise = pure mempty
 
 unifyChild :: Unify t => t -> t -> StateT Subst Infer ()
 unifyChild t u =
     do
         old <- State.get
         ((), s) <- lift $ M.listenSubst $ unifyGeneric (Subst.apply old t) (Subst.apply old u)
-        State.put (old `mappend` s)
+        State.put (old <> s)
 
 unifyIntersection :: (Unify a, Ord k) => Map k a -> Map k a -> Infer ()
 unifyIntersection tfields ufields =
@@ -183,7 +183,7 @@ instance Unify Type where
     unifyGeneric t1 t2                       =  dontUnify t1 t2
 
 instance M.CompositeHasVar p => Unify (T.Composite p) where
-    unifyGeneric T.CEmpty T.CEmpty       =  return ()
+    unifyGeneric T.CEmpty T.CEmpty       =  pure ()
     unifyGeneric (T.CVar u) t            =  varBind u t
     unifyGeneric t (T.CVar u)            =  varBind u t
     unifyGeneric

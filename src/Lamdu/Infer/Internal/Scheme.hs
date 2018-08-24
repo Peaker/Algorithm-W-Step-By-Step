@@ -32,12 +32,11 @@ makeScheme = Scheme.make . M._constraints . M._ctxResults
 mkInstantiateSubstPart ::
     (M.VarKind t, Monad m) => SkolemScope -> String -> Set (T.Var t) -> InferCtx m (Map (T.Var t) (T.Var t))
 mkInstantiateSubstPart skolemScope prefix =
-    fmap Map.fromList . mapM f . Set.toList
+    fmap Map.fromList . traverse f . Set.toList
     where
         f oldVar =
-            do
-                freshVarExpr <- M.freshInferredVarName skolemScope prefix
-                return (oldVar, freshVarExpr)
+            M.freshInferredVarName skolemScope prefix
+            <&> (,) oldVar
 
 
 {-# INLINE instantiateWithRenames #-}
@@ -54,7 +53,7 @@ instantiateWithRenames skolemScope (Scheme (TypeVars tv rv sv) constraints t) =
         -- fresh variables, no need to apply the ordinary expensive
         -- and error-emitting tell
         M.Infer $ M.ctxResults . M.constraints <>= constraints'
-        return (renames, Subst.apply subst t)
+        pure (renames, Subst.apply subst t)
 
 {-# INLINE instantiate #-}
 instantiate :: Monad m => SkolemScope -> Scheme -> InferCtx m Type

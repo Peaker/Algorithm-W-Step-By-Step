@@ -22,7 +22,7 @@ applySubst (Subst _ rtvSubsts stvSubsts) (Constraints prodC sumC) =
     do
         (prodCAdditions, prodC') <- applySubstCompositeConstraints DuplicateField rtvSubsts prodC
         (sumCAdditions, sumC') <- applySubstCompositeConstraints DuplicateAlt stvSubsts sumC
-        return
+        pure
             ( Constraints prodCAdditions sumCAdditions
             , Constraints prodC' sumC'
             )

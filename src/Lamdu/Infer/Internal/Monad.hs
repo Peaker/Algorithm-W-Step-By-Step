@@ -152,7 +152,7 @@ appendResults (Context (Results s0 c0) state) (Results s1 c1) =
         -- constraints and only verify skolem constraints against the
         -- new ones.
         verifySkolemConstraints state (newC <> c1)
-        return $ Results (s0 <> s1) (c0' <> c1)
+        pure $ Results (s0 <> s1) (c0' <> c1)
 {-# INLINE appendResults #-}
 
 data Context = Context
@@ -262,7 +262,7 @@ listenNoTell (Infer (StateT act)) =
     Infer $ StateT $ \c0 ->
     do
         (y, c1) <- act c0 { _ctxResults = emptyResults }
-        return ((y, _ctxResults c1), c1 { _ctxResults = _ctxResults c0} )
+        pure ((y, _ctxResults c1), c1 { _ctxResults = _ctxResults c0} )
 {-# INLINE listenNoTell #-}
 
 nextInt :: Monad m => StateT Int m Int
@@ -270,7 +270,7 @@ nextInt =
     do
         old <- State.get
         id += 1
-        return old
+        pure old
 {-# INLINE nextInt #-}
 
 freshInferredVarName ::
@@ -280,7 +280,7 @@ freshInferredVarName skolemScope prefix =
         oldSupply <- Lens.zoom inferSupply nextInt
         let varName = fromString $ prefix ++ show oldSupply
         inferSkolemsInScope . skolemsInScopeMap . Lens.at varName ?= skolemScope
-        return varName
+        pure varName
     & Lens.zoom ctxState
     & Infer
 {-# INLINE freshInferredVarName #-}
@@ -288,8 +288,7 @@ freshInferredVarName skolemScope prefix =
 getSkolemsInScope :: (Monad m, VarKind t) => T.Var t -> InferCtx m SkolemScope
 getSkolemsInScope varName =
     Lens.use
-    (ctxState . inferSkolemsInScope . skolemsInScopeMap . Lens.at varName .
-     Lens._Just)
+    (ctxState . inferSkolemsInScope . skolemsInScopeMap . Lens.ix varName)
     & Infer
 {-# INLINE getSkolemsInScope #-}
 

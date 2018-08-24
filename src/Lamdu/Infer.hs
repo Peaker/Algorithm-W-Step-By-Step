@@ -89,7 +89,7 @@ inferSubst deps rootScope val =
         prevSubst <- M.getSubst
         let rootScope' = Subst.apply prevSubst rootScope
         (inferredVal, s) <- M.listenSubst $ inferInternal mkPayload deps rootScope' val
-        return (rootScope', inferredVal <&> _1 %~ Subst.apply s)
+        pure (rootScope', inferredVal <&> _1 %~ Subst.apply s)
     where
         mkPayload typ scope dat = (Payload typ scope, dat)
 
@@ -103,7 +103,7 @@ infer deps scope val =
     do
         ((scope', val'), results) <- M.listenNoTell $ inferSubst deps scope val
         M.tell $ results & M.subst %~ Subst.intersect (TV.free scope')
-        return val'
+        pure val'
 
 data CompositeHasTag p = HasTag | DoesNotHaveTag | MayHaveTag (T.Var (T.Composite p))
 
@@ -137,13 +137,13 @@ inferLeaf globals leaf = \_go locals ->
     V.LHole -> freshInferredVar locals "h"
     V.LVar n ->
         case Scope.lookupTypeOf n locals of
-        Just t -> return t
+        Just t -> pure t
         Nothing ->
             case Map.lookup n globals of
             Just s -> Scheme.instantiate (Scope.skolems locals) s
             Nothing -> M.throwError $ Err.UnboundVariable n
-    V.LLiteral (V.PrimVal p _) -> return $ T.TInst p Map.empty
-    V.LRecEmpty -> return $ T.TRecord T.CEmpty
+    V.LLiteral (V.PrimVal p _) -> pure $ T.TInst p Map.empty
+    V.LRecEmpty -> pure $ T.TRecord T.CEmpty
     V.LAbsurd -> freshInferredVar locals "a" <&> T.TFun (T.TVariant T.CEmpty)
     <&> (,) (V.BLeaf leaf)
 
@@ -154,7 +154,7 @@ inferAbs (V.Lam n e) = \go locals ->
         tv <- freshInferredVar locals "a"
         let locals' = Scope.insertTypeOf n tv locals
         ((t1, e'), s1) <- M.listenSubst $ go locals' e
-        return (V.BLam (V.Lam n e'), T.TFun (Subst.apply s1 tv) t1)
+        pure (V.BLam (V.Lam n e'), T.TFun (Subst.apply s1 tv) t1)
 
 {-# INLINE inferApply #-}
 inferApply :: V.Apply a -> InferHandler a b
@@ -169,7 +169,7 @@ inferApply (V.Apply e1 e2) = \go locals ->
 
         ((), p3_s) <- M.listenSubst $ unifyUnsafe p2_t1 (T.TFun p2_t2 p2_tv)
         let p3_tv = Subst.apply p3_s p2_tv
-        return (V.BApp (V.Apply e1' e2'), p3_tv)
+        pure (V.BApp (V.Apply e1' e2'), p3_tv)
 
 {-# INLINE inferGetField #-}
 inferGetField :: V.GetField a -> InferHandler a b
@@ -184,7 +184,7 @@ inferGetField (V.GetField e name) = \go locals ->
             M.listenSubst $ unifyUnsafe p1_t $
             T.TRecord $ T.CExtend name p1_tv $ TV.lift p1_tvRecName
         let p2_tv = Subst.apply p2_s p1_tv
-        return (V.BGetField (V.GetField e' name), p2_tv)
+        pure (V.BGetField (V.GetField e' name), p2_tv)
 
 {-# INLINE inferInject #-}
 inferInject :: V.Inject a -> InferHandler a b
@@ -193,7 +193,7 @@ inferInject (V.Inject name e) = \go locals ->
         (t, e') <- go locals e
         tvVariantName <- freshInferredVarName locals "s"
         M.tellVariantConstraint tvVariantName name
-        return
+        pure
             ( V.BInject (V.Inject name e')
             , T.TVariant $ T.CExtend name t $ TV.lift tvVariantName
             )
@@ -233,7 +233,7 @@ inferCase (V.Case name m mm) = \go locals ->
             p4_tvRes     = p4 p3_tvRes
             p4_tv        = p4 p3_tv
         -- p4
-        return
+        pure
             ( V.BCase (V.Case name m' mm')
             , T.TFun (T.TVariant (T.CExtend name p4_tv p4_tvVariant)) p4_tvRes
             )
@@ -253,16 +253,16 @@ inferRecExtend (V.RecExtend name e1 e2) = \go locals ->
                 -- and avoid unnecessary unify from other case
                 case hasTag name x of
                 HasTag -> M.throwError $ Err.DuplicateField name x
-                DoesNotHaveTag -> return x
+                DoesNotHaveTag -> pure x
                 MayHaveTag var -> x <$ M.tellRecordConstraint var name
             _ -> do
                 tv <- freshInferredVarName locals "r"
                 M.tellRecordConstraint tv name
                 let tve = TV.lift tv
                 ((), s) <- M.listenSubst $ unifyUnsafe t2 $ T.TRecord tve
-                return $ Subst.apply s tve
+                pure $ Subst.apply s tve
         let t1' = Subst.apply s3 $ Subst.apply s2 t1
-        return
+        pure
             ( V.BRecExtend (V.RecExtend name e1' e2')
             , T.TRecord $ T.CExtend name t1' rest
             )
@@ -271,7 +271,7 @@ getNominal :: Map T.NominalId Nominal -> T.NominalId -> M.Infer Nominal
 getNominal nominals name =
     case Map.lookup name nominals of
     Nothing -> M.throwError $ Err.MissingNominal name
-    Just nominal -> return nominal
+    Just nominal -> pure nominal
 
 -- errorizes if the map mismatches the map in the Nominal
 applyNominal :: Map T.ParamId Type -> Nominal -> NominalType
@@ -293,7 +293,7 @@ nomTypes outerSkolemsScope nominals name =
             & sequenceA
         case applyNominal p1_paramVals nominal of
             OpaqueNominal -> Err.AccessOpaqueNominal name & M.throwError
-            NominalType scheme -> return (T.TInst name p1_paramVals, scheme)
+            NominalType scheme -> pure (T.TInst name p1_paramVals, scheme)
 
 {-# INLINE inferFromNom #-}
 inferFromNom :: Map T.NominalId Nominal -> V.Nom a -> InferHandler a b
@@ -305,7 +305,7 @@ inferFromNom nominals (V.Nom name val) = \go locals ->
         p1_innerType <- Scheme.instantiate (Scope.skolems locals) p1_innerScheme
         ((), p2_s) <- M.listenSubst $ unifyUnsafe p1_t p1_outerType
         let p2_innerType = Subst.apply p2_s p1_innerType
-        return
+        pure
             ( V.BFromNom (V.Nom name val')
             , p2_innerType
             )
@@ -322,7 +322,7 @@ inferToNom nominals (V.Nom name val) = \go locals ->
         (p1_t, val') <- go (Scope.insertSkolems skolems locals) val
         ((), p2_s) <- M.listenSubst $ unifyUnsafe p1_t p1_innerType
         let p2_outerType = Subst.apply p2_s p1_outerType
-        return
+        pure
             ( V.BToNom (V.Nom name val')
             , p2_outerType
             )

@@ -41,14 +41,14 @@ validateType loader nominals typ =
             do
                 typeParams <-
                     Map.lookup nomId nominals
-                    & maybe (loadNominal loader nomId) return
+                    & maybe (loadNominal loader nomId) pure
                     <&> (^. nomParams)
                 unless (ascKeys typeArgs == ascKeys typeParams) $
                     fail $ unwords
                     [ "TInst", show nomId, "gives type args", show typeArgs
                     , "but nomId expects", show typeParams
                     ]
-        validate _ = return ()
+        validate _ = pure ()
 
 validateLoaded :: Monad m => Loader m -> Dependencies -> m ()
 validateLoaded loader (Deps types nominals) =
@@ -64,7 +64,7 @@ loadVal loader scope val =
             <$> loadMap loadTypeOf (val ^.. valGlobals (Map.keysSet (scopeToTypeMap scope)))
             <*> loadMap loadNominal (val ^.. valNominals)
         validateLoaded loader loaded
-        return loaded
+        pure loaded
     where
         loadMap f x = x & Set.fromList & Map.fromSet (f loader) & Traversable.sequenceA
 

@@ -6,6 +6,7 @@ import           Control.Lens (zoom)
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
 import           Control.Monad.State (StateT(..), runState, modify, get)
+import           Data.Foldable (traverse_)
 import qualified Data.Map as M
 import           Lamdu.Calc.Type ((~>), Type(..), Composite(..))
 import           Lamdu.Calc.Val.Annotated (Val(..))
@@ -121,16 +122,15 @@ exps =
     , P.toNom (fst xGetterPairConstrained) (P.lambda "record" $ \record -> record $. "x")
 
     , P.toNom (fst polySTPair)
-      ((P.var "stBind") $$ infixArgs P.hole (P.lambda "var" (const P.hole)))
+      (P.var "stBind" $$ infixArgs P.hole (P.lambda "var" (const P.hole)))
     ]
 
 nullTest :: Val ()
 nullTest =
     P.lambda "list" $ \l ->
-    ( P._case "[]" (P.lambda "_" (const (P.var "True"))) $
-      P._case ":" (P.lambda "_" (const (P.var "False"))) $
-      P.absurd
-    ) $$ P.fromNom (fst listTypePair) l
+    P._case "[]" (P.lambda "_" (const (P.var "True")))
+    (P._case ":" (P.lambda "_" (const (P.var "False"))) P.absurd)
+    $$ P.fromNom (fst listTypePair) l
 
 unifies :: [(Type, Type)]
 unifies =
@@ -162,19 +162,19 @@ runAndPrint e =
                     tag x =
                       do  n <- zoom _1 next
                           zoom _2 $ modify $ M.insert n x
-                          return n
+                          pure n
                 let (taggedVal, (_, types)) =
                       runState (traverse (tag . _plType . fst) val) (0::Int, M.empty)
                 print $ pPrint taggedVal
                 let indent = PP.hcat $ replicate 4 PP.space
-                mapM_ (\(k, t) -> print $ indent PP.<> pPrint k <+> "=" <+> pPrint t) $ M.toList types
+                traverse_ (\(k, t) -> print $ indent PP.<> pPrint k <+> "=" <+> pPrint t) $ M.toList types
 
 inferType :: Scope -> Val a -> Infer (Type, Val (Payload, a))
 inferType scope e =
     do
         e' <- infer env scope e
         let t = e' ^. Val.payload . _1 . plType
-        return (t, e')
+        pure (t, e')
 
 test :: Val () -> IO ()
 test e = runAndPrint e $ inferType emptyScope e
@@ -199,7 +199,7 @@ main :: IO ()
 main =
     do
         putStrLn "Expression types:"
-        mapM_ test exps
+        traverse_ test exps
         putStrLn "Unify:"
-        mapM_ (uncurry testUnify) unifies
+        traverse_ (uncurry testUnify) unifies
         TestFramework.defaultMain [testProperty "alphaEq self" prop_alphaEq]

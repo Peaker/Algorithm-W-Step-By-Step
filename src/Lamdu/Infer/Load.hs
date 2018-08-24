@@ -12,12 +12,12 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Traversable as Traversable
+import           Lamdu.Calc.Term (Val)
+import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
 import           Lamdu.Calc.Type.Nominal (Nominal, nomParams, nomType, _NominalType)
 import           Lamdu.Calc.Type.Scheme (Scheme, schemeType)
-import           Lamdu.Calc.Val.Annotated (Val)
-import qualified Lamdu.Calc.Val as V
 import           Lamdu.Expr.Lens (nextLayer, valGlobals, valNominals)
 import           Lamdu.Infer (Scope, Infer, infer, Payload, Dependencies(..), scopeToTypeMap)
 

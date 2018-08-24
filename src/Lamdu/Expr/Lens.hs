@@ -37,17 +37,16 @@ module Lamdu.Expr.Lens
 import           Control.Lens (Traversal', Prism', Iso', iso)
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
-import           Control.Monad (void)
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Data.Set.Lens (setmapped)
+import           Data.Tree.Diverse (Node(..), _Node, Ann(..), val, annotations)
+import           Lamdu.Calc.Term (Val)
+import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
 import           Lamdu.Calc.Type.Constraints (CompositeVarConstraints(..), Constraints(..))
 import           Lamdu.Calc.Type.Scheme (Scheme(..))
-import qualified Lamdu.Calc.Val as V
-import           Lamdu.Calc.Val.Annotated (Val(..))
-import qualified Lamdu.Calc.Val.Annotated as Val
 
 import           Prelude.Compat
 
@@ -106,15 +105,15 @@ constraintsTagsSet f (Constraints productCs sumCs) =
 
 {-# INLINE valApply #-}
 valApply :: Traversal' (Val a) (V.Apply (Val a))
-valApply = Val.body . V._BApp
+valApply = _Node . val . V._BApp
 
 {-# INLINE valAbs #-}
 valAbs :: Traversal' (Val a) (V.Lam (Val a))
-valAbs = Val.body . V._BLam
+valAbs = _Node . val . V._BLam
 
 {-# INLINE pureValBody #-}
-pureValBody :: Iso' (Val ()) (V.Body (Val ()))
-pureValBody = iso Val._valBody (Val ())
+pureValBody :: Iso' (Val ()) (V.Term (Ann ()))
+pureValBody = iso (^. _Node . val) (Node . Ann ())
 
 {-# INLINE pureValApply #-}
 pureValApply :: Prism' (Val ()) (V.Apply (Val ()))
@@ -122,47 +121,47 @@ pureValApply = pureValBody . V._BApp
 
 {-# INLINE valHole #-}
 valHole :: Traversal' (Val a) ()
-valHole = Val.body . valBodyHole
+valHole = _Node . val . valBodyHole
 
 {-# INLINE valVar #-}
 valVar :: Traversal' (Val a) V.Var
-valVar = Val.body . valBodyVar
+valVar = _Node . val . valBodyVar
 
 {-# INLINE valRecEmpty #-}
 valRecEmpty :: Traversal' (Val a) ()
-valRecEmpty = Val.body . valBodyRecEmpty
+valRecEmpty = _Node . val . valBodyRecEmpty
 
 {-# INLINE valLiteral #-}
 valLiteral :: Traversal' (Val a) V.PrimVal
-valLiteral = Val.body . valBodyLiteral
+valLiteral = _Node . val . valBodyLiteral
 
 {-# INLINE valGetField #-}
 valGetField  :: Traversal' (Val a) (V.GetField (Val a))
-valGetField = Val.body . V._BGetField
+valGetField = _Node . val . V._BGetField
 
 {-# INLINE valBodyHole #-}
-valBodyHole :: Prism' (V.Body expr) ()
+valBodyHole :: Prism' (V.Term expr) ()
 valBodyHole = V._BLeaf . V._LHole
 
 {-# INLINE valBodyVar #-}
-valBodyVar :: Prism' (V.Body expr) V.Var
+valBodyVar :: Prism' (V.Term expr) V.Var
 valBodyVar = V._BLeaf . V._LVar
 
 {-# INLINE valBodyRecEmpty #-}
-valBodyRecEmpty :: Prism' (V.Body expr) ()
+valBodyRecEmpty :: Prism' (V.Term expr) ()
 valBodyRecEmpty = V._BLeaf . V._LRecEmpty
 
 {-# INLINE valBodyLiteral #-}
-valBodyLiteral :: Prism' (V.Body expr) V.PrimVal
+valBodyLiteral :: Prism' (V.Term expr) V.PrimVal
 valBodyLiteral = V._BLeaf . V._LLiteral
 
 {-# INLINE valLeafs #-}
 valLeafs :: Lens.IndexedTraversal' a (Val a) V.Leaf
-valLeafs f (Val pl body) =
+valLeafs f (Node (Ann pl body)) =
     case body of
     V.BLeaf l -> Lens.indexed f pl l <&> V.BLeaf
-    _ -> (Lens.traverse . valLeafs) f body
-    <&> Val pl
+    _ -> (V.termChildren . valLeafs) f body
+    <&> Ann pl <&> Node
 
 {-# INLINE compositeFields #-}
 compositeFields :: Traversal' (T.Composite p) (T.Tag, Type)
@@ -180,17 +179,18 @@ compositeTags f = compositeFields $ \(tag, typ) -> (,) <$> f tag <*> typeTags f 
 
 {-# INLINE subExprPayloads #-}
 subExprPayloads :: Lens.IndexedTraversal (Val ()) (Val a) (Val b) a b
-subExprPayloads f val@(Val pl body) =
-    Val
-    <$> Lens.indexed f (void val) pl
-    <*> (Lens.traversed .> subExprPayloads) f body
+subExprPayloads f x@(Node (Ann pl body)) =
+    Ann
+    <$> Lens.indexed f (x & annotations .~ ()) pl
+    <*> (V.termChildren .> subExprPayloads) f body
+    <&> Node
 
 {-# INLINE subExprs #-}
 subExprs :: Lens.Fold (Val a) (Val a)
 subExprs =
     Lens.folding f
     where
-        f x = x : x ^.. Val.body . Lens.traversed . subExprs
+        f x = x : x ^.. _Node . val . V.termChildren . subExprs
 
 {-# INLINE payloadsIndexedByPath #-}
 payloadsIndexedByPath ::
@@ -202,26 +202,27 @@ payloadsIndexedByPath ::
 payloadsIndexedByPath f =
     go []
     where
-        go path val@(Val pl body) =
-            Val
+        go path x@(Node (Ann pl body)) =
+            Ann
             <$> Lens.indexed f newPath pl
-            <*> Lens.traversed (go newPath) body
+            <*> V.termChildren (go newPath) body
+            <&> Node
             where
-                newPath = void val : path
+                newPath = (x & annotations .~ ()) : path
 
 {-# INLINE payloadsOf #-}
 payloadsOf ::
-    Lens.Fold (V.Body (Val ())) a -> Lens.IndexedTraversal' (Val ()) (Val b) b
+    Lens.Fold (V.Term (Ann ())) a -> Lens.IndexedTraversal' (Val ()) (Val b) b
 payloadsOf body =
     subExprPayloads . Lens.ifiltered predicate
     where
-        predicate idx _ = Lens.has (Val.body . body) idx
+        predicate idx _ = Lens.has (_Node . val . body) idx
 
 {-# INLINE biTraverseBodyTags #-}
 biTraverseBodyTags ::
     Applicative f =>
-    (T.Tag -> f T.Tag) -> (a -> f b) ->
-    V.Body a -> f (V.Body b)
+    (T.Tag -> f T.Tag) -> (Val a -> f (Val b)) ->
+    V.Term (Ann a) -> f (V.Term (Ann b))
 biTraverseBodyTags onTag onChild body =
     case body of
     V.BInject (V.Inject t v) ->
@@ -232,19 +233,19 @@ biTraverseBodyTags onTag onChild body =
         V.BCase <$> (V.Case <$> onTag t <*> onChild v <*> onChild r)
     V.BRecExtend (V.RecExtend t v r) ->
         V.BRecExtend <$> (V.RecExtend <$> onTag t <*> onChild v <*> onChild r)
-    _ -> Lens.traverse onChild body
+    _ -> V.termChildren onChild body
 
 {-# INLINE bodyTags #-}
-bodyTags :: Lens.Traversal' (V.Body a) T.Tag
+bodyTags :: Lens.Traversal' (V.Term (Ann a)) T.Tag
 bodyTags f = biTraverseBodyTags f pure
 
 {-# INLINE valTags #-}
 valTags :: Lens.Traversal' (Val a) T.Tag
-valTags f = Val.body $ biTraverseBodyTags f (valTags f)
+valTags f = _Node . val $ biTraverseBodyTags f (valTags f)
 
 {-# INLINE valGlobals #-}
 valGlobals :: Set V.Var -> Lens.IndexedFold a (Val a) V.Var
-valGlobals scope f (Val pl body) =
+valGlobals scope f (Node (Ann pl body)) =
     case body of
     V.BLeaf (V.LVar v)
         | Set.member v scope -> V.LVar v & V.BLeaf & pure
@@ -252,16 +253,16 @@ valGlobals scope f (Val pl body) =
     V.BLam (V.Lam var lamBody) ->
         valGlobals (Set.insert var scope) f lamBody
         <&> V.Lam var <&> V.BLam
-    _ -> (Lens.traverse . valGlobals scope) f body
-    <&> Val pl
+    _ -> (V.termChildren . valGlobals scope) f body
+    <&> Ann pl <&> Node
 
 {-# INLINE valNominals #-}
 valNominals :: Lens.Traversal' (Val a) T.NominalId
-valNominals f (Val pl body) =
+valNominals f (Node (Ann pl body)) =
     case body of
     V.BFromNom nom -> onNom nom <&> V.BFromNom
     V.BToNom nom -> onNom nom <&> V.BToNom
-    _ -> body & Lens.traverse . valNominals %%~ f
-    <&> Val pl
+    _ -> body & V.termChildren . valNominals %%~ f
+    <&> Ann pl <&> Node
     where
-        onNom (V.Nom nomId val) = V.Nom <$> f nomId <*> valNominals f val
+        onNom (V.Nom nomId x) = V.Nom <$> f nomId <*> valNominals f x

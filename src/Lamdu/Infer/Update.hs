@@ -9,7 +9,8 @@ import           Prelude.Compat
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
 import qualified Control.Monad.Trans.State as State
-import           Lamdu.Calc.Val.Annotated (Val)
+import           Data.Tree.Diverse (annotations)
+import           Lamdu.Calc.Term (Val)
 import qualified Lamdu.Infer as Infer
 import qualified Lamdu.Infer.Internal.Monad as M
 import qualified Lamdu.Infer.Internal.Subst as Subst
@@ -31,5 +32,5 @@ update t = Update $ \ctx -> (Subst.apply . M._subst . M._ctxResults) ctx t
 {-# INLINE update #-}
 
 inferredVal :: Val (Infer.Payload, a) -> Update (Val (Infer.Payload, a))
-inferredVal = traverse . _1 %%~ update
+inferredVal = annotations . _1 %%~ update
 {-# INLINE inferredVal #-}

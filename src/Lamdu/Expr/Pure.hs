@@ -10,18 +10,19 @@ module Lamdu.Expr.Pure
     ) where
 
 import           Data.ByteString (ByteString)
+import           Data.Tree.Diverse (Node(..), Ann(..))
+import           Lamdu.Calc.Term (Val)
+import qualified Lamdu.Calc.Term as V
 import qualified Lamdu.Calc.Type as T
-import           Lamdu.Calc.Val.Annotated (Val(..))
-import qualified Lamdu.Calc.Val as V
 
 import           Prelude.Compat hiding (abs)
 
 abs :: Monoid a => V.Var -> Val a -> Val a
 abs name body =
-    Val mempty $ V.BLam $ V.Lam name body
+    Node $ Ann mempty $ V.BLam $ V.Lam name body
 
 leaf :: Monoid a => V.Leaf -> Val a
-leaf = Val mempty . V.BLeaf
+leaf = Node . Ann mempty . V.BLeaf
 
 var :: Monoid a => V.Var -> Val a
 var = leaf . V.LVar
@@ -30,31 +31,31 @@ lit :: Monoid a => T.NominalId -> ByteString -> Val a
 lit p d = leaf $ V.LLiteral $ V.PrimVal p d
 
 recEmpty :: Monoid a => Val a
-recEmpty = Val mempty $ V.BLeaf V.LRecEmpty
+recEmpty = Node $ Ann mempty $ V.BLeaf V.LRecEmpty
 
 app :: Monoid a => Val a -> Val a -> Val a
-app f x = Val mempty $ V.BApp $ V.Apply f x
+app f x = Node $ Ann mempty $ V.BApp $ V.Apply f x
 
 recExtend :: Monoid a => T.Tag -> Val a -> Val a -> Val a
-recExtend name typ rest = Val mempty $ V.BRecExtend $ V.RecExtend name typ rest
+recExtend name typ rest = Node $ Ann mempty $ V.BRecExtend $ V.RecExtend name typ rest
 
 getField :: Monoid a => Val a -> T.Tag -> Val a
-getField r n = Val mempty $ V.BGetField $ V.GetField r n
+getField r n = Node $ Ann mempty $ V.BGetField $ V.GetField r n
 
 inject :: Monoid a => T.Tag -> Val a -> Val a
-inject n r = Val mempty $ V.BInject $ V.Inject n r
+inject n r = Node $ Ann mempty $ V.BInject $ V.Inject n r
 
 absurd :: Monoid a => Val a
 absurd = leaf V.LAbsurd
 
 _case :: Monoid a => T.Tag -> Val a -> Val a -> Val a
-_case tag match mismatch = Val mempty $ V.BCase $ V.Case tag match mismatch
+_case tag match mismatch = Node $ Ann mempty $ V.BCase $ V.Case tag match mismatch
 
 fromNom :: Monoid a => T.NominalId -> Val a -> Val a
-fromNom tid v = Val mempty $ V.BFromNom $ V.Nom tid v
+fromNom tid v = Node $ Ann mempty $ V.BFromNom $ V.Nom tid v
 
 toNom :: Monoid a => T.NominalId -> Val a -> Val a
-toNom tid v = Val mempty $ V.BToNom $ V.Nom tid v
+toNom tid v = Node $ Ann mempty $ V.BToNom $ V.Nom tid v
 
 hole :: Monoid a => Val a
 hole = leaf V.LHole

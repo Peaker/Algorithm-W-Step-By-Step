@@ -9,7 +9,7 @@ import           Control.Monad (join)
 import           Control.Monad.State (StateT(..), runState, modify, get)
 import           Data.Foldable (traverse_)
 import qualified Data.Map as M
-import           Data.Tree.Diverse (_Node, ann, annotations)
+import           Data.Tree.Diverse (ann, annotations)
 import           Lamdu.Calc.Term (Val)
 import           Lamdu.Calc.Term.Arbitrary ()
 import           Lamdu.Calc.Term.Eq (alphaEq)

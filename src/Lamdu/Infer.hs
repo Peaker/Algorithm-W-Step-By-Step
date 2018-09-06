@@ -22,7 +22,7 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Maybe (fromMaybe)
 import           Data.Semigroup (Semigroup(..))
-import           Data.Tree.Diverse (Node(..), Ann(..), annotations)
+import           Data.Tree.Diverse (Node, Ann(..), annotations)
 import           Data.Typeable (Typeable)
 import           GHC.Generics (Generic)
 import           Lamdu.Calc.Term (Val)
@@ -334,7 +334,7 @@ inferInternal ::
 inferInternal f deps =
     (fmap . fmap) snd . go
     where
-        go locals (Node (Ann pl body)) =
+        go locals (Ann pl body) =
             ( case body of
               V.BLeaf leaf -> inferLeaf (deps ^. depsGlobalTypes) leaf
               V.BLam lam -> inferAbs lam
@@ -346,4 +346,4 @@ inferInternal f deps =
               V.BFromNom nom -> inferFromNom (deps ^. depsNominals) nom
               V.BToNom nom -> inferToNom (deps ^. depsNominals) nom
             ) go locals
-            <&> \(body', typ) -> (typ, Node (Ann (f typ locals pl) body'))
+            <&> \(body', typ) -> (typ, Ann (f typ locals pl) body')

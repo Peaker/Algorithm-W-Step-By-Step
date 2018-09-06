@@ -176,7 +176,7 @@ inferType :: Scope -> Val a -> Infer (Type, Val (Payload, a))
 inferType scope e =
     do
         e' <- infer env scope e
-        let t = e' ^. _Node . ann . _1 . plType
+        let t = e' ^. ann . _1 . plType
         pure (t, e')
 
 test :: Val () -> IO ()

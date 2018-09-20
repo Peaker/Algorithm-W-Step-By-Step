@@ -22,6 +22,8 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import qualified Data.Set as Set
+import           Lamdu.Calc.Pure (($$), ($$:))
+import qualified Lamdu.Calc.Pure as P
 import           Lamdu.Calc.Term (Val)
 import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type, (~>))
@@ -31,8 +33,6 @@ import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..))
 import           Lamdu.Calc.Type.Scheme (Scheme(..))
 import qualified Lamdu.Calc.Type.Scheme as Scheme
 import qualified Lamdu.Calc.Type.Vars as TV
-import           Lamdu.Expr.Pure (($$), ($$:))
-import qualified Lamdu.Expr.Pure as P
 import           Lamdu.Infer (TypeVars(..), Dependencies(..))
 
 {-# ANN module ("HLint: ignore Redundant $" :: String) #-}

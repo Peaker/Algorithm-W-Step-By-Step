@@ -10,12 +10,12 @@ import           Control.Monad.State (StateT(..), runState, modify, get)
 import           Data.Foldable (traverse_)
 import qualified Data.Map as M
 import           Data.Tree.Diverse (ann, annotations)
+import           Lamdu.Calc.Pure (($$), ($=), ($.))
+import qualified Lamdu.Calc.Pure as P
 import           Lamdu.Calc.Term (Val)
 import           Lamdu.Calc.Term.Arbitrary ()
 import           Lamdu.Calc.Term.Eq (alphaEq)
 import           Lamdu.Calc.Type ((~>), Type(..), Composite(..))
-import           Lamdu.Expr.Pure (($$), ($=), ($.))
-import qualified Lamdu.Expr.Pure as P
 import           Lamdu.Infer
 import           Lamdu.Infer.Unify
 import qualified Lamdu.Infer.Update as Update

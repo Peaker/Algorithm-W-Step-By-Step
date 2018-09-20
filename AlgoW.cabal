@@ -16,9 +16,7 @@ Flag noprettyclass
 library
   ghc-options:         -Wall -O2 -Wnoncanonical-monad-instances -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   ghc-prof-options:    -fprof-auto -fprof-cafs
-  exposed-modules:     Lamdu.Expr.Lens
-                     , Lamdu.Expr.Pure
-                     , Lamdu.Infer
+  exposed-modules:     Lamdu.Infer
                      , Lamdu.Infer.Error
                      , Lamdu.Infer.Load
                      , Lamdu.Infer.Unify

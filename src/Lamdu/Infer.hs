@@ -149,8 +149,9 @@ inferLeaf globals leaf = \_go locals ->
     <&> (,) (V.BLeaf leaf)
 
 {-# INLINE inferAbs #-}
-inferAbs :: V.Lam a -> InferHandler a b
-inferAbs (V.Lam n e) = \go locals ->
+inferAbs :: V.Lam (Ann a) -> InferHandler (Val a) b
+inferAbs (V.Lam n e) =
+    \go locals ->
     do
         tv <- freshInferredVar locals "a"
         let locals' = Scope.insertTypeOf n tv locals

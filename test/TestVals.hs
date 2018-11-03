@@ -28,7 +28,7 @@ import           Lamdu.Calc.Term (Val)
 import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type, (~>))
 import qualified Lamdu.Calc.Type as T
-import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..))
+import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..), CompositeVarsConstraints(..))
 import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..))
 import           Lamdu.Calc.Type.Scheme (Scheme(..))
 import qualified Lamdu.Calc.Type.Scheme as Scheme
@@ -201,8 +201,8 @@ xGetterPairConstrained =
       \tvRest ->
           mempty
           { recordVarConstraints =
-              CompositeVarConstraints $ Map.singleton tvRest $
-              Set.fromList ["x", "y"]
+              CompositeVarsConstraints $ Map.singleton tvRest $
+              CompositeVarConstraints $ Set.fromList ["x", "y"]
           }
 
     )

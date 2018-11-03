@@ -34,7 +34,7 @@ import qualified Data.Set as Set
 import           Data.String (IsString(..))
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
-import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..))
+import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..), CompositeVarsConstraints(..))
 import qualified Lamdu.Calc.Type.Constraints as Constraints
 import qualified Lamdu.Calc.Type.Vars as TV
 import           Lamdu.Infer.Error (Error)
@@ -230,20 +230,21 @@ tellConstraints :: Constraints -> Infer ()
 tellConstraints x = tell $ emptyResults { _constraints = x }
 {-# INLINE tellConstraints #-}
 
+singleForbiddenField :: T.Var (T.Composite t) -> T.Tag -> CompositeVarsConstraints t
+singleForbiddenField v tag =
+    CompositeVarsConstraints $ Map.singleton v $
+    CompositeVarConstraints
+    { _forbiddenFields = Set.singleton tag
+    }
+
 tellRecordConstraint :: T.RecordVar -> T.Tag -> Infer ()
 tellRecordConstraint v tag =
-    tellConstraints $ mempty
-    { recordVarConstraints =
-      CompositeVarConstraints $ Map.singleton v $ Set.singleton tag
-    }
+    tellConstraints $ mempty { recordVarConstraints = singleForbiddenField v tag }
 {-# INLINE tellRecordConstraint #-}
 
 tellVariantConstraint :: T.VariantVar -> T.Tag -> Infer ()
 tellVariantConstraint v tag =
-    tellConstraints $ mempty
-    { variantVarConstraints =
-      CompositeVarConstraints $ Map.singleton v $ Set.singleton tag
-    }
+    tellConstraints $ mempty { variantVarConstraints = singleForbiddenField v tag }
 {-# INLINE tellVariantConstraint #-}
 
 listen :: Infer a -> Infer (a, Results)

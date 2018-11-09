@@ -1,0 +1,34 @@
+Subset constraints:
+
+* TV a <= superComposite*
+
+* Normalization:
+  * If superComposite is empty, a becomes empty
+  * All forbidden fields of "a" are deleted from superComposite
+  * Can do a post-process normalization pass, to avoid propagating info from supersets to
+    subsets during inference
+
+* No useful/easy way to merge supersets:
+  * If types of tag match, can keep 1
+  * If types of tag mismatch, can throw away
+  * However: Must not UNIFY! The tag may be excluded
+  * If unknown, must keep both in case they eventually unify and are in the subset
+
+  * Thus: Simpler to just keep all the supers
+
+* Perhaps keep the supersets in Flat composite form?
+
+* Unification:
+  * Unifying two TVs unifies the constraints:
+    * Concat all the supersets together
+    * No need to immediately filter forbidden tags from supersets, let eventual normalize do it
+
+* Substitute TV with T:
+  * For each superset of TV:
+    * [Re-]open T into T' with a fresh TV: Tail(T) <= Tail(T')
+    * Unify T' with superset
+
+* Learn new forbidden fields on subset -- no validation to do (normalization will shrink supersets)
+
+* Learn new forbidden fields on superset -- no extra validation to do (any subset using these
+  fields already copied them to superset)

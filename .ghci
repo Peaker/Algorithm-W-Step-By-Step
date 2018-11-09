@@ -1,5 +1,7 @@
 :set -optP-include -optPdist/build/autogen/cabal_macros.h
 :set -isrc
 :set -i.
-:set -Wall
 :set -XNoImplicitPrelude
+:set -Wall -Wnoncanonical-monad-instances -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+:set -odir=ghci-out
+:set -outputdir=ghci-out

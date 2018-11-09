@@ -1,6 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude, BangPatterns #-}
+{-# LANGUAGE NoImplicitPrelude, BangPatterns, DeriveFunctor #-}
 module Lamdu.Infer.Internal.Constraints
-    ( applySubst
+    ( Substituted(..), applySubst
     ) where
 
 import qualified Control.Lens as Lens
@@ -15,17 +15,25 @@ import           Lamdu.Infer.Internal.Subst (Subst(..))
 
 import           Prelude.Compat
 
+data Substituted c = Substituted
+    { newConstraints :: c
+    -- ^ Constraints added as a result of applying substititions to
+    -- the old constraints
+    , allConstraints :: c
+    } deriving Functor
+
 applySubst ::
-    Subst -> Constraints ->
-    Either Error ({-additions-}Constraints, Constraints)
+    Subst -> Constraints -> Either Error (Substituted Constraints)
 applySubst (Subst _ rtvSubsts stvSubsts) (Constraints prodC sumC) =
     do
-        (prodCAdditions, prodC') <- applySubstCompositeConstraints DuplicateField rtvSubsts prodC
-        (sumCAdditions, sumC') <- applySubstCompositeConstraints DuplicateAlt stvSubsts sumC
-        pure
-            ( Constraints prodCAdditions sumCAdditions
-            , Constraints prodC' sumC'
-            )
+        Substituted prodCAdditions prodC' <-
+            applySubstCompositeConstraints DuplicateField rtvSubsts prodC
+        Substituted sumCAdditions sumC' <-
+            applySubstCompositeConstraints DuplicateAlt stvSubsts sumC
+        Substituted
+            { newConstraints = Constraints prodCAdditions sumCAdditions
+            , allConstraints = Constraints prodC' sumC'
+            } & pure
 
 -- When substituting a composite variable, we need to carry
 -- its old constraints on the new variable. This may fail,
@@ -36,14 +44,14 @@ applySubstCompositeConstraints ::
     (T.Tag -> T.Composite t -> err) ->
     Map (T.Var (T.Composite t)) (T.Composite t) ->
     CompositeVarsConstraints t ->
-    Either err (CompositeVarsConstraints t, CompositeVarsConstraints t)
+    Either err (Substituted (CompositeVarsConstraints t))
 applySubstCompositeConstraints fieldForbidden rtvSubsts (CompositeVarsConstraints m) =
-    foldM subst (mempty, m) (Map.toList m)
-    <&> Lens.both %~ CompositeVarsConstraints
+    foldM subst (Substituted mempty m) (Map.toList m)
+    <&> fmap CompositeVarsConstraints
     where
-        subst (!added, !oldMap) (var, constraints) =
+        subst s@(Substituted !added !oldMap) (var, constraints) =
             case Map.lookup var rtvSubsts of
-            Nothing -> Right (added, oldMap)
+            Nothing -> Right s
             Just recType ->
                 -- We have a constraint "var : constraints" and we're
                 -- substituting "var" with "recType". Carry the old
@@ -53,16 +61,17 @@ applySubstCompositeConstraints fieldForbidden rtvSubsts (CompositeVarsConstraint
                     go T.CEmpty =
                         -- There is no tail to carry the constraint to, we've
                         -- enforced it and now we can just delete it
-                        Right (added, Map.delete var oldMap)
+                        Substituted added (Map.delete var oldMap)
+                        & Right
                     go (T.CVar newVar) =
                         -- All Map.inserts go into the "added" map so we have a list
                         -- of added constraints.
                         -- Here we carry the old "constraints" constraint into the tail
                         -- of "recType"
-                        Right
-                        ( Map.insert newVar constraints added
-                        , Map.insert newVar constraints oldMap
-                        )
+                        Substituted
+                        (Map.insert newVar constraints added)
+                        (Map.insert newVar constraints oldMap)
+                        & Right
                     go (T.CExtend field _ rest)
                         | constraints ^. forbiddenFields . Lens.contains field =
                             Left $ fieldForbidden field recType

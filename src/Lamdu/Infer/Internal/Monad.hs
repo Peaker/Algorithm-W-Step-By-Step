@@ -144,7 +144,7 @@ verifySkolemConstraints state newConstraints
 appendResults :: Context -> Results -> Either Error Results
 appendResults (Context (Results s0 c0) state) (Results s1 c1) =
     do
-        (newC, c0') <- Constraints.applySubst s1 c0
+        Constraints.Substituted newC c0' <- Constraints.applySubst s1 c0
         -- TODO: c1 is usually empty, but c0' will contain ALL of c0,
         -- even though we're only interested in the NEW constraints
         -- that come from applySubst. Change applySubst to return a

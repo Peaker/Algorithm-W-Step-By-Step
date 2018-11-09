@@ -3,7 +3,6 @@ module Lamdu.Infer.Internal.Constraints
     ( applySubst
     ) where
 
-import           Prelude.Compat
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
 import           Control.Monad (foldM)
@@ -14,6 +13,8 @@ import qualified Lamdu.Calc.Type as T
 import           Lamdu.Calc.Type.Constraints (Constraints(..), CompositeVarConstraints(..))
 import           Lamdu.Infer.Error (Error(DuplicateField, DuplicateAlt))
 import           Lamdu.Infer.Internal.Subst (Subst(..))
+
+import           Prelude.Compat
 
 applySubst ::
     Subst -> Constraints ->

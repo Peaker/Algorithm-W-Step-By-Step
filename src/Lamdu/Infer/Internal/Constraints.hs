@@ -9,7 +9,8 @@ import           Control.Monad (foldM)
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Lamdu.Calc.Type as T
-import           Lamdu.Calc.Type.Constraints (Constraints(..), forbiddenFields, CompositeVarsConstraints(..))
+import           Lamdu.Calc.Type.Constraints (Constraints(..))
+import qualified Lamdu.Calc.Type.Constraints as Constraints
 import           Lamdu.Infer.Error (Error(DuplicateField, DuplicateAlt))
 import           Lamdu.Infer.Internal.Subst (Subst(..))
 
@@ -43,11 +44,11 @@ applySubst (Subst _ rtvSubsts stvSubsts) (Constraints prodC sumC) =
 applySubstCompositeConstraints ::
     (T.Tag -> T.Composite t -> err) ->
     Map (T.Var (T.Composite t)) (T.Composite t) ->
-    CompositeVarsConstraints t ->
-    Either err (Substituted (CompositeVarsConstraints t))
-applySubstCompositeConstraints fieldForbidden rtvSubsts (CompositeVarsConstraints m) =
+    Constraints.CompositeVars t ->
+    Either err (Substituted (Constraints.CompositeVars t))
+applySubstCompositeConstraints fieldForbidden rtvSubsts (Constraints.CompositeVars m) =
     foldM subst (Substituted mempty m) (Map.toList m)
-    <&> fmap CompositeVarsConstraints
+    <&> fmap Constraints.CompositeVars
     where
         subst s@(Substituted !added !oldMap) (var, constraints) =
             case Map.lookup var rtvSubsts of
@@ -73,6 +74,6 @@ applySubstCompositeConstraints fieldForbidden rtvSubsts (CompositeVarsConstraint
                         (Map.insert newVar constraints oldMap)
                         & Right
                     go (T.CExtend field _ rest)
-                        | constraints ^. forbiddenFields . Lens.contains field =
+                        | constraints ^. Constraints.forbiddenFields . Lens.contains field =
                             Left $ fieldForbidden field recType
                         | otherwise = go rest

@@ -6,8 +6,6 @@ module Lamdu.Infer.Internal.Subst
     , fromRenames
     ) where
 
-import           Prelude.Compat hiding (null, lookup)
-
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Data.Map.Utils as MapUtils
@@ -22,6 +20,8 @@ import qualified Lamdu.Calc.Type.Vars as TypeVars
 import           Text.PrettyPrint (nest, text, vcat, ($+$))
 import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 import           Text.PrettyPrint.Utils (pPrintMap)
+
+import           Prelude.Compat hiding (null, lookup)
 
 type SubSubst t = Map (T.Var t) t
 

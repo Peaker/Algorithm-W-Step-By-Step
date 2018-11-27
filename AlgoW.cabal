@@ -38,6 +38,7 @@ library
                      , deepseq >=1.3 && <1.5
                      , lamdu-calculus
                      , lens >=4.1
+                     , syntax-tree
                      , transformers >=0.3 && <0.6
   hs-source-dirs:   src
   if flag(noprettyclass)
@@ -85,6 +86,7 @@ test-suite algow-test
                      , lamdu-calculus
                      , lens
                      , mtl
+                     , syntax-tree
                      , test-framework >= 0.8.1.1
                      , test-framework-quickcheck2 >= 0.3.0.3
                      , transformers

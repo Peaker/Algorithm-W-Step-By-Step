@@ -2,6 +2,7 @@
 
 import           Prelude.Compat hiding (any)
 
+import           AST.Ann (ann, annotations)
 import           Control.Lens (zoom)
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
@@ -9,7 +10,6 @@ import           Control.Monad (join)
 import           Control.Monad.State (StateT(..), runState, modify, get)
 import           Data.Foldable (traverse_)
 import qualified Data.Map as M
-import           Data.Tree.Diverse (ann, annotations)
 import           Lamdu.Calc.Pure (($$), ($=), ($.))
 import qualified Lamdu.Calc.Pure as P
 import           Lamdu.Calc.Term (Val)

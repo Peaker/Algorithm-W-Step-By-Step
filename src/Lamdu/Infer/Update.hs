@@ -6,10 +6,10 @@ module Lamdu.Infer.Update
 
 import           Prelude.Compat
 
+import           AST.Ann (annotations)
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
 import qualified Control.Monad.Trans.State as State
-import           Data.Tree.Diverse (annotations)
 import           Lamdu.Calc.Term (Val)
 import qualified Lamdu.Infer as Infer
 import qualified Lamdu.Infer.Internal.Monad as M

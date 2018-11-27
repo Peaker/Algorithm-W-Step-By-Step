@@ -13,6 +13,8 @@ module Lamdu.Infer
     , applyNominal
     ) where
 
+import           AST (Node)
+import           AST.Ann (Ann(..), annotations)
 import           Control.DeepSeq (NFData(..))
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
@@ -22,7 +24,6 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Maybe (fromMaybe)
 import           Data.Semigroup (Semigroup(..))
-import           Data.Tree.Diverse (Node, Ann(..), annotations)
 import           Data.Typeable (Typeable)
 import           GHC.Generics (Generic)
 import           Lamdu.Calc.Term (Val)

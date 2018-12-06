@@ -6,7 +6,7 @@ module Lamdu.Infer.Update
 
 import           Prelude.Compat
 
-import           AST.Ann (annotations)
+import           AST (annotations)
 import           Control.Lens.Operators
 import           Control.Lens.Tuple
 import qualified Control.Monad.Trans.State as State

@@ -2,7 +2,7 @@
 
 import           Prelude.Compat hiding (any)
 
-import           AST.Ann (ann, annotations)
+import           AST (ann, annotations)
 import           Control.Lens (zoom)
 import           Control.Lens.Operators
 import           Control.Lens.Tuple

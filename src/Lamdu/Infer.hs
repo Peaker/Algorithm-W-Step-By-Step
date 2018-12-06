@@ -13,8 +13,7 @@ module Lamdu.Infer
     , applyNominal
     ) where
 
-import           AST (Node)
-import           AST.Ann (Ann(..), annotations)
+import           AST (Node, Ann(..), annotations)
 import           Control.DeepSeq (NFData(..))
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators

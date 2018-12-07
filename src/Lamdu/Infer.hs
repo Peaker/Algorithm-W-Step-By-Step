@@ -149,7 +149,7 @@ inferLeaf globals leaf = \_go locals ->
     <&> (,) (V.BLeaf leaf)
 
 {-# INLINE inferAbs #-}
-inferAbs :: V.Lam (Ann a) -> InferHandler (Val a) b
+inferAbs :: V.Lam V.Var V.Term (Ann a) -> InferHandler (Val a) b
 inferAbs (V.Lam n e) =
     \go locals ->
     do
@@ -159,8 +159,9 @@ inferAbs (V.Lam n e) =
         pure (V.BLam (V.Lam n e'), T.TFun (Subst.apply s1 tv) t1)
 
 {-# INLINE inferApply #-}
-inferApply :: V.Apply a -> InferHandler a b
-inferApply (V.Apply e1 e2) = \go locals ->
+inferApply :: V.Apply V.Term (Ann a) -> InferHandler (Val a) b
+inferApply (V.Apply e1 e2) =
+    \go locals ->
     do
         ((p1_t1, e1'), p1_s) <- M.listenSubst $ go locals e1
         let p1 = Subst.apply p1_s

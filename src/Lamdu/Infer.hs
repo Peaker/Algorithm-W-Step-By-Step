@@ -13,7 +13,7 @@ module Lamdu.Infer
     , applyNominal
     ) where
 
-import           AST (Node, Ann(..), annotations)
+import           AST (Tree, Ann(..), annotations)
 import           Control.DeepSeq (NFData(..))
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
@@ -116,8 +116,8 @@ hasTag tag (T.CExtend t _ r)
     | otherwise = hasTag tag r
 
 type InferHandler a b =
-    (Scope -> a -> Infer (Type, Node (Ann b) V.Term)) -> Scope ->
-    M.Infer (V.Term (Ann b), Type)
+    (Scope -> a -> Infer (Type, Tree (Ann b) V.Term)) -> Scope ->
+    M.Infer (Tree V.Term (Ann b), Type)
 
 {-# INLINE freshInferredVar #-}
 freshInferredVar :: (M.VarKind t, Monad m) => Scope -> String -> M.InferCtx m t
@@ -149,7 +149,7 @@ inferLeaf globals leaf = \_go locals ->
     <&> (,) (V.BLeaf leaf)
 
 {-# INLINE inferAbs #-}
-inferAbs :: V.Lam V.Var V.Term (Ann a) -> InferHandler (Val a) b
+inferAbs :: Tree (V.Lam V.Var V.Term) (Ann a) -> InferHandler (Val a) b
 inferAbs (V.Lam n e) =
     \go locals ->
     do
@@ -159,7 +159,7 @@ inferAbs (V.Lam n e) =
         pure (V.BLam (V.Lam n e'), T.TFun (Subst.apply s1 tv) t1)
 
 {-# INLINE inferApply #-}
-inferApply :: V.Apply V.Term (Ann a) -> InferHandler (Val a) b
+inferApply :: Tree (V.Apply V.Term) (Ann a) -> InferHandler (Val a) b
 inferApply (V.Apply e1 e2) =
     \go locals ->
     do

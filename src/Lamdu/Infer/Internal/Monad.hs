@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude, DeriveFunctor, FlexibleInstances, GeneralizedNewtypeDeriving, MultiParamTypeClasses, BangPatterns, RecordWildCards, TypeFamilies #-}
+{-# LANGUAGE NoImplicitPrelude, DeriveFunctor, FlexibleInstances, GeneralizedNewtypeDeriving, MultiParamTypeClasses, BangPatterns, RecordWildCards, TypeFamilies, TemplateHaskell #-}
 module Lamdu.Infer.Internal.Monad
     ( Results(..), subst, constraints
     , Context(..), ctxResults, initialContext
@@ -59,17 +59,7 @@ instance Monoid SkolemsInScope where
     mempty = SkolemsInScope mempty mempty mempty
     mappend = (<>)
 
-sisTVs :: Lens' SkolemsInScope (Map T.TypeVar SkolemScope)
-sisTVs f SkolemsInScope {..} = f _sisTVs <&> \_sisTVs -> SkolemsInScope {..}
-{-# INLINE sisTVs #-}
-
-sisRTVs :: Lens' SkolemsInScope (Map T.RecordVar SkolemScope)
-sisRTVs f SkolemsInScope {..} = f _sisRTVs <&> \_sisRTVs -> SkolemsInScope {..}
-{-# INLINE sisRTVs #-}
-
-sisSTVs :: Lens' SkolemsInScope (Map T.VariantVar SkolemScope)
-sisSTVs f SkolemsInScope {..} = f _sisSTVs <&> \_sisSTVs -> SkolemsInScope {..}
-{-# INLINE sisSTVs #-}
+Lens.makeLenses ''SkolemsInScope
 
 class Subst.CompositeHasVar p => CompositeHasVar p where
     compositeSkolemsInScopeMap :: Lens' SkolemsInScope (Map (T.Var (T.Composite p)) SkolemScope)
@@ -98,34 +88,14 @@ data InferState = InferState
     , _inferSkolemsInScope :: {-# UNPACK #-}!SkolemsInScope
     } deriving (Eq, Ord)
 
-inferSupply :: Lens' InferState Int
-inferSupply f InferState {..} = f _inferSupply <&> \_inferSupply -> InferState {..}
-{-# INLINE inferSupply #-}
-
-inferSkolems :: Lens' InferState TV.TypeVars
-inferSkolems f InferState {..} = f _inferSkolems <&> \_inferSkolems -> InferState {..}
-{-# INLINE inferSkolems #-}
-
-inferSkolemConstraints :: Lens' InferState Constraints
-inferSkolemConstraints f InferState {..} = f _inferSkolemConstraints <&> \_inferSkolemConstraints -> InferState {..}
-{-# INLINE inferSkolemConstraints #-}
-
-inferSkolemsInScope :: Lens' InferState SkolemsInScope
-inferSkolemsInScope f InferState {..} = f _inferSkolemsInScope <&> \_inferSkolemsInScope -> InferState {..}
-{-# INLINE inferSkolemsInScope #-}
+Lens.makeLenses ''InferState
 
 data Results = Results
     { _subst :: {-# UNPACK #-} !Subst
     , _constraints :: !Constraints
     } deriving (Eq, Ord)
 
-subst :: Lens' Results Subst
-subst f Results {..} = f _subst <&> \_subst -> Results {..}
-{-# INLINE subst #-}
-
-constraints :: Lens' Results Constraints
-constraints f Results {..} = f _constraints <&> \_constraints -> Results {..}
-{-# INLINE constraints #-}
+Lens.makeLenses ''Results
 
 emptyResults :: Results
 emptyResults = Results mempty mempty
@@ -160,13 +130,7 @@ data Context = Context
     , _ctxState :: {-# UNPACK #-} !InferState
     } deriving (Eq, Ord)
 
-ctxResults :: Lens' Context Results
-ctxResults f Context {..} = f _ctxResults <&> \_ctxResults -> Context {..}
-{-# INLINE ctxResults #-}
-
-ctxState :: Lens' Context InferState
-ctxState f Context {..} = f _ctxState <&> \_ctxState -> Context {..}
-{-# INLINE ctxState #-}
+Lens.makeLenses ''Context
 
 initialContext :: Context
 initialContext =

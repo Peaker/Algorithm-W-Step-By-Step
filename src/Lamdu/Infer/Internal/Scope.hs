@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude, DeriveGeneric, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude, DeriveGeneric, GeneralizedNewtypeDeriving, TemplateHaskell #-}
 module Lamdu.Infer.Internal.Scope
     ( Scope
     , emptyScope
@@ -36,9 +36,7 @@ newtype SkolemScope = SkolemScope { _skolemScopeVars :: TV.TypeVars }
 instance Pretty SkolemScope where
     pPrint (SkolemScope tvs) = text "Skolems:" <+> pPrint tvs
 
-skolemScopeVars :: Lens.Iso' SkolemScope TV.TypeVars
-skolemScopeVars = Lens.iso _skolemScopeVars SkolemScope
-{-# INLINE skolemScopeVars #-}
+Lens.makeLenses ''SkolemScope
 
 skolemScopeIntersection :: SkolemScope -> SkolemScope -> SkolemScope
 skolemScopeIntersection (SkolemScope a) (SkolemScope b) =

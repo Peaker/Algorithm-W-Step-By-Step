@@ -41,12 +41,11 @@ mkInstantiateSubstPart skolemScope prefix =
 
 {-# INLINE instantiateWithRenames #-}
 instantiateWithRenames :: Monad m => SkolemScope -> Scheme -> InferCtx m (TV.Renames, Type)
-instantiateWithRenames skolemScope (Scheme (TypeVars tv rv sv) constraints t) =
+instantiateWithRenames skolemScope (Scheme (TypeVars tv rv) constraints t) =
     do
         typeVarSubsts <- mkInstantiateSubstPart skolemScope "i" tv
-        recordSubsts <- mkInstantiateSubstPart skolemScope "k" rv
-        sumSubsts <- mkInstantiateSubstPart skolemScope "s" sv
-        let renames = TV.Renames typeVarSubsts recordSubsts sumSubsts
+        rowVarSubsts <- mkInstantiateSubstPart skolemScope "k" rv
+        let renames = TV.Renames typeVarSubsts rowVarSubsts
         let subst = Subst.fromRenames renames
         let constraints' = Constraints.applyRenames renames constraints
         -- Avoid tell for these new constraints, because they refer to

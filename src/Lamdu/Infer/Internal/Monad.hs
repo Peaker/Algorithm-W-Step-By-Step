@@ -7,8 +7,7 @@ module Lamdu.Infer.Internal.Monad
     , throwError
 
     , tell, tellSubst
-    , tellRecordConstraint
-    , tellVariantConstraint
+    , tellRowConstraint
     , listen, listenNoTell
     , getSubst
     , listenSubst
@@ -17,7 +16,7 @@ module Lamdu.Infer.Internal.Monad
 
     , narrowTVScope, getSkolemsInScope
 
-    , CompositeHasVar, VarKind
+    , VarKind
     , freshInferredVar, freshInferredVarName
     ) where
 
@@ -48,27 +47,17 @@ import qualified Lamdu.Infer.Internal.Subst as Subst
 import           Prelude.Compat
 
 data SkolemsInScope = SkolemsInScope
-    { _sisTVs  :: Map T.TypeVar    SkolemScope
-    , _sisRTVs :: Map T.RecordVar  SkolemScope
-    , _sisSTVs :: Map T.VariantVar SkolemScope
+    { _sisTVs :: Map T.TypeVar SkolemScope
+    , _sisRVs :: Map T.RowVar  SkolemScope
     } deriving (Eq, Ord)
 instance Semigroup SkolemsInScope where
-    SkolemsInScope tvs0 rtvs0 stvs0 <> SkolemsInScope tvs1 rtvs1 stvs1 =
-        SkolemsInScope (tvs0 <> tvs1) (rtvs0 <> rtvs1) (stvs0 <> stvs1)
+    SkolemsInScope tvs0 rvs0 <> SkolemsInScope tvs1 rvs1 =
+        SkolemsInScope (tvs0 <> tvs1) (rvs0 <> rvs1)
 instance Monoid SkolemsInScope where
-    mempty = SkolemsInScope mempty mempty mempty
+    mempty = SkolemsInScope mempty mempty
     mappend = (<>)
 
 Lens.makeLenses ''SkolemsInScope
-
-class Subst.CompositeHasVar p => CompositeHasVar p where
-    compositeSkolemsInScopeMap :: Lens' SkolemsInScope (Map (T.Var (T.Composite p)) SkolemScope)
-instance CompositeHasVar T.RecordTag where
-    compositeSkolemsInScopeMap = sisRTVs
-    {-# INLINE compositeSkolemsInScopeMap #-}
-instance CompositeHasVar T.VariantTag where
-    compositeSkolemsInScopeMap = sisSTVs
-    {-# INLINE compositeSkolemsInScopeMap #-}
 
 class Subst.HasVar t => VarKind t where
     skolemsInScopeMap :: Lens' SkolemsInScope (Map (T.Var t) SkolemScope)
@@ -77,14 +66,14 @@ instance VarKind Type where
     skolemsInScopeMap = sisTVs
     {-# INLINE skolemsInScopeMap #-}
 
-instance CompositeHasVar p => VarKind (T.Composite p) where
-    skolemsInScopeMap = compositeSkolemsInScopeMap
+instance VarKind T.Row where
+    skolemsInScopeMap = sisRVs
     {-# INLINE skolemsInScopeMap #-}
 
 data InferState = InferState
     { _inferSupply :: {-# UNPACK #-}!Int
     , _inferSkolems :: {-# UNPACK #-}!TV.TypeVars
-    , _inferSkolemConstraints :: {-# UNPACK #-}!Constraints
+    , _inferSkolemConstraints :: !Constraints
     , _inferSkolemsInScope :: {-# UNPACK #-}!SkolemsInScope
     } deriving (Eq, Ord)
 
@@ -194,22 +183,16 @@ tellConstraints :: Constraints -> Infer ()
 tellConstraints x = tell $ emptyResults { _constraints = x }
 {-# INLINE tellConstraints #-}
 
-singleForbiddenField :: T.Var (T.Composite t) -> T.Tag -> Constraints.CompositeVars t
+singleForbiddenField :: T.Var T.Row -> T.Tag -> Constraints
 singleForbiddenField v tag =
-    Constraints.CompositeVars $ Map.singleton v $
+    Constraints $ Map.singleton v $
     Constraints.CompositeVar
     { _forbiddenFields = Set.singleton tag
     }
 
-tellRecordConstraint :: T.RecordVar -> T.Tag -> Infer ()
-tellRecordConstraint v tag =
-    tellConstraints $ mempty { Constraints.recordVar = singleForbiddenField v tag }
-{-# INLINE tellRecordConstraint #-}
-
-tellVariantConstraint :: T.VariantVar -> T.Tag -> Infer ()
-tellVariantConstraint v tag =
-    tellConstraints $ mempty { Constraints.variantVar = singleForbiddenField v tag }
-{-# INLINE tellVariantConstraint #-}
+tellRowConstraint :: T.RowVar -> T.Tag -> Infer ()
+tellRowConstraint v = tellConstraints . singleForbiddenField v
+{-# INLINE tellRowConstraint #-}
 
 listen :: Infer a -> Infer (a, Results)
 listen (Infer (StateT act)) =

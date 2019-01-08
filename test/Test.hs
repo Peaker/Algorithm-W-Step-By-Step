@@ -15,7 +15,7 @@ import qualified Lamdu.Calc.Pure as P
 import           Lamdu.Calc.Term (Val)
 import           Lamdu.Calc.Term.Arbitrary ()
 import           Lamdu.Calc.Term.Eq (alphaEq)
-import           Lamdu.Calc.Type ((~>), Type(..), Composite(..))
+import           Lamdu.Calc.Type ((~>), Type(..), Row(..))
 import           Lamdu.Infer
 import           Lamdu.Infer.Unify
 import qualified Lamdu.Infer.Update as Update
@@ -137,16 +137,16 @@ nullTest =
 unifies :: [(Type, Type)]
 unifies =
     [ ( ( TRecord $
-          CExtend "z" (TVar "b") $
-          CExtend "x" (TVar "c") $
-          CExtend "y" (TVar "d") $
-          CEmpty
+          RExtend "z" (TVar "b") $
+          RExtend "x" (TVar "c") $
+          RExtend "y" (TVar "d") $
+          REmpty
         ) ~> TVar "e"
       , ( TRecord $
-          CExtend "x" intType $
-          CExtend "y" (TVar "a") $
-          CExtend "z" (TVar "a") $
-          CVar "r"
+          RExtend "x" intType $
+          RExtend "y" (TVar "a") $
+          RExtend "z" (TVar "a") $
+          RVar "r"
         ) ~> TVar "a"
       )
     ]

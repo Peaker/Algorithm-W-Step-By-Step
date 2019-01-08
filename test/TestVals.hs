@@ -49,11 +49,11 @@ eLet name val mkBody = P.app (P.abs name body) val
 letItem :: V.Var -> Val () -> (Val () -> Val ()) -> Val ()
 letItem name val mkBody = P.lambda name mkBody $$ val
 
-openRecordType :: T.RecordVar -> [(T.Tag, Type)] -> Type
-openRecordType tv = T.TRecord . foldr (uncurry T.CExtend) (T.CVar tv)
+openRecordType :: T.RowVar -> [(T.Tag, Type)] -> Type
+openRecordType tv = T.TRecord . foldr (uncurry T.RExtend) (T.RVar tv)
 
 recordType :: [(T.Tag, Type)] -> Type
-recordType = T.TRecord . foldr (uncurry T.CExtend) T.CEmpty
+recordType = T.TRecord . foldr (uncurry T.RExtend) T.REmpty
 
 forAll :: [T.TypeVar] -> ([Type] -> Type) -> Scheme
 forAll tvs mkType =
@@ -77,9 +77,9 @@ listTypePair =
     , Nominal
         { _nomParams = Map.singleton "elem" tvName
         , _nomType =
-            T.CEmpty
-            & T.CExtend "[]" (recordType [])
-            & T.CExtend ":" (recordType [("head", tv), ("tail", listOf tv)])
+            T.REmpty
+            & T.RExtend "[]" (recordType [])
+            & T.RExtend ":" (recordType [("head", tv), ("tail", listOf tv)])
             & T.TVariant
             & Scheme.mono
             & NominalType
@@ -104,9 +104,9 @@ boolTypePair =
     , Nominal
         { _nomParams = Map.empty
         , _nomType =
-            T.CEmpty
-            & T.CExtend "True" (recordType [])
-            & T.CExtend "False" (recordType [])
+            T.REmpty
+            & T.RExtend "True" (recordType [])
+            & T.RExtend "False" (recordType [])
             & T.TVariant
             & Scheme.mono
             & NominalType
@@ -177,7 +177,7 @@ ignoredParamTypePair =
         }
     )
 
-xGetter :: (T.RecordVar -> Constraints) -> Nominal
+xGetter :: (T.RowVar -> Constraints) -> Nominal
 xGetter constraints =
     Nominal
     { _nomParams = Map.empty
@@ -186,7 +186,7 @@ xGetter constraints =
         openRecordType tvRest [("x", ta)] ~> ta
     }
     where
-        tvRest :: T.RecordVar
+        tvRest :: T.RowVar
         tvRest = "rest"
 
 xGetterPair :: (T.NominalId, Nominal)
@@ -199,22 +199,19 @@ xGetterPairConstrained :: (T.NominalId, Nominal)
 xGetterPairConstrained =
     ( "XGetterConstrained"
     , xGetter $
-      \tvRest ->
-          mempty
-          { Constraints.recordVar =
-              Constraints.CompositeVars $ Map.singleton tvRest
-              Constraints.CompositeVar
-              { Constraints._forbiddenFields = Set.fromList ["x", "y"]
-              }
-          }
-
+        \tvRest ->
+        Constraints $
+        Map.singleton tvRest
+        Constraints.CompositeVar
+        { Constraints._forbiddenFields = Set.fromList ["x", "y"]
+        }
     )
 
 maybeOf :: Type -> Type
 maybeOf t =
     T.TVariant $
-    T.CExtend "Nothing" (recordType []) $
-    T.CExtend "Just" t T.CEmpty
+    T.RExtend "Nothing" (recordType []) $
+    T.RExtend "Just" t T.REmpty
 
 infixType :: Type -> Type -> Type -> Type
 infixType a b c = recordType [("l", a), ("r", b)] ~> c

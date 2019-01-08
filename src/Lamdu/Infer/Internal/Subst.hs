@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Lamdu.Infer.Internal.Subst
-    ( HasVar(new), CompositeHasVar
+    ( HasVar(new)
     , Subst(..), intersect
     , CanSubst(..)
     , fromRenames
@@ -27,23 +27,21 @@ type SubSubst t = Map (T.Var t) t
 
 data Subst = Subst
     { substTypes :: SubSubst Type
-    , substRecordTypes :: SubSubst T.Record
-    , substSumTypes :: SubSubst T.Variant
+    , substRows :: SubSubst T.Row
     } deriving (Eq, Ord, Show)
 
 instance Pretty Subst where
-    pPrint (Subst t r s) =
+    pPrint (Subst t r) =
         text "Subst:"
         $+$ nest 4
         ( vcat
           [ pPrintMap t
           , pPrintMap r
-          , pPrintMap s
           ]
         )
 
 null :: Subst -> Bool
-null (Subst t r s) = Map.null t && Map.null r && Map.null s
+null (Subst t r) = Map.null t && Map.null r
 
 unionDisjoint :: (Pretty a, Pretty k, Ord k) => Map k a -> Map k a -> Map k a
 unionDisjoint m1 m2 =
@@ -59,24 +57,23 @@ unionDisjoint m1 m2 =
             ]
 
 instance Semigroup Subst where
-    subst0@(Subst t0 r0 s0) <> subst1@(Subst t1 r1 s1)
+    subst0@(Subst t0 r0) <> subst1@(Subst t1 r1)
         | null subst1 = subst0
         | otherwise =
         Subst
         (t1 `unionDisjoint` Map.map (apply subst1) t0)
         (r1 `unionDisjoint` Map.map (apply subst1) r0)
-        (s1 `unionDisjoint` Map.map (apply subst1) s0)
 
 instance Monoid Subst where
-    mempty = Subst Map.empty Map.empty Map.empty
+    mempty = Subst Map.empty Map.empty
     mappend = (<>)
 
 intersectMapSet :: Ord k => Set k -> Map k a -> Map k a
 intersectMapSet s m = Map.intersection m $ Map.fromSet (const ()) s
 
 intersect :: TypeVars -> Subst -> Subst
-intersect (TypeVars tvs rtvs stvs) (Subst ts rs ss) =
-    Subst (intersectMapSet tvs ts) (intersectMapSet rtvs rs) (intersectMapSet stvs ss)
+intersect (TypeVars tvs rvs) (Subst ts rs) =
+    Subst (intersectMapSet tvs ts) (intersectMapSet rvs rs)
 
 class TypeVars.Free a => CanSubst a where
     apply   :: Subst -> a -> a
@@ -85,14 +82,10 @@ class (TypeVars.VarKind t, CanSubst t) => HasVar t where
     new :: T.Var t -> t -> Subst
     lookup :: T.Var t -> Subst -> Maybe t
 
-class TypeVars.CompositeVarKind p => CompositeHasVar p where
-    compositeNew :: SubSubst (T.Composite p) -> Subst
-    compositeGet :: Subst -> SubSubst (T.Composite p)
-
-instance CompositeHasVar p => CanSubst (T.Composite p) where
-    apply _ T.CEmpty          = T.CEmpty
-    apply s (T.CVar n)        = fromMaybe (T.CVar n) $ lookup n s
-    apply s (T.CExtend n t r) = T.CExtend n (apply s t) (apply s r)
+instance CanSubst T.Row where
+    apply _ T.REmpty          = T.REmpty
+    apply s (T.RVar n)        = fromMaybe (T.RVar n) $ lookup n s
+    apply s (T.RExtend n t r) = T.RExtend n (apply s t) (apply s r)
 
 instance CanSubst Type where
     apply s (T.TVar n)      = fromMaybe (T.TVar n) $ lookup n s
@@ -102,11 +95,10 @@ instance CanSubst Type where
     apply s (T.TVariant r)      = T.TVariant $ apply s r
 
 remove :: TypeVars -> Subst -> Subst
-remove (TypeVars tvs rtvs stvs) (Subst subT subR subS) =
+remove (TypeVars tvs rvs) (Subst subT subR) =
     Subst
     (MapUtils.differenceSet subT tvs)
-    (MapUtils.differenceSet subR rtvs)
-    (MapUtils.differenceSet subS stvs)
+    (MapUtils.differenceSet subR rvs)
 
 instance CanSubst Scheme where
     apply s (Scheme forAll constraints typ) =
@@ -123,28 +115,15 @@ instance HasVar Type where
     {-# INLINE lookup #-}
     lookup tv s = Map.lookup tv (substTypes s)
 
-instance CompositeHasVar T.RecordTag where
-    {-# INLINE compositeGet #-}
-    compositeGet = substRecordTypes
-    {-# INLINE compositeNew #-}
-    compositeNew v = mempty { substRecordTypes = v }
-
-instance CompositeHasVar T.VariantTag where
-    {-# INLINE compositeGet #-}
-    compositeGet = substSumTypes
-    {-# INLINE compositeNew #-}
-    compositeNew v = mempty { substSumTypes = v }
-
-instance CompositeHasVar p => HasVar (T.Composite p) where
+instance HasVar T.Row where
     {-# INLINE new #-}
-    new tv t = compositeNew $ Map.singleton tv t
+    new tv t = mempty { substRows = Map.singleton tv t }
     {-# INLINE lookup #-}
-    lookup tv t = Map.lookup tv (compositeGet t)
+    lookup tv t = Map.lookup tv (substRows t)
 
 {-# INLINE fromRenames #-}
 fromRenames :: TypeVars.Renames -> Subst
-fromRenames (TypeVars.Renames tvRenames prodRenames sumRenames) =
+fromRenames (TypeVars.Renames tvRenames rvRenames) =
     Subst
     (fmap TypeVars.lift tvRenames)
-    (fmap TypeVars.lift prodRenames)
-    (fmap TypeVars.lift sumRenames)
+    (fmap TypeVars.lift rvRenames)

@@ -36,8 +36,8 @@ unifyUnsafe = unifyGeneric
 -- These tvs appear in a context that only allows given skolems, so
 -- narrow down the skolem scopes of these tvs
 narrowSkolemScopesIn :: Monad m => SkolemScope -> TV.TypeVars -> M.InferCtx m ()
-narrowSkolemScopesIn allowedSkolems (TV.TypeVars tvs rtvs stvs) =
-    narrow tvs >> narrow rtvs >> narrow stvs
+narrowSkolemScopesIn allowedSkolems (TV.TypeVars tvs rvs) =
+    narrow tvs >> narrow rvs
     where
         narrow nonSkolems =
             Foldable.traverse_ (M.narrowTVScope allowedSkolems)
@@ -87,12 +87,11 @@ varBind u t
 class CanSubst t => Unify t where
     unifyGeneric :: t -> t -> Infer ()
 
-closedRecord :: Map T.Tag Type -> T.Composite p
+closedRecord :: Map T.Tag Type -> T.Row
 closedRecord fields = FlatComposite.toComposite (FlatComposite fields Nothing)
 
 unifyFlatToPartial ::
-    M.CompositeHasVar p =>
-    Subst -> (Map T.Tag Type, T.Var (T.Composite p)) -> Map T.Tag Type ->
+    Subst -> (Map T.Tag Type, T.RowVar) -> Map T.Tag Type ->
     Infer ()
 unifyFlatToPartial s (tfields, tname) ufields
     | not (Map.null uniqueTFields) =
@@ -109,10 +108,9 @@ unifyFlatToPartial s (tfields, tname) ufields
         uniqueUFields = ufields `Map.difference` tfields
 
 unifyFlatPartials ::
-    M.CompositeHasVar p =>
     Subst ->
-    (Map T.Tag Type, T.Var (T.Composite p)) ->
-    (Map T.Tag Type, T.Var (T.Composite p)) ->
+    (Map T.Tag Type, T.RowVar) ->
+    (Map T.Tag Type, T.RowVar) ->
     Infer ()
 unifyFlatPartials s0 (tfields, tname) (ufields, uname) =
     do
@@ -122,9 +120,9 @@ unifyFlatPartials s0 (tfields, tname) (ufields, uname) =
         ((), s1) <-
             M.listenSubst $ varBind tname $
             Subst.apply s0 $
-            Map.foldrWithKey T.CExtend restTv uniqueUFields
-        varBind uname $ Subst.apply (mappend s0 s1) $
-            Map.foldrWithKey T.CExtend restTv uniqueTFields
+            Map.foldrWithKey T.RExtend restTv uniqueUFields
+        varBind uname $ Subst.apply (s0 <> s1) $
+            Map.foldrWithKey T.RExtend restTv uniqueTFields
     where
         uniqueTFields = tfields `Map.difference` ufields
         uniqueUFields = ufields `Map.difference` tfields
@@ -151,7 +149,7 @@ unifyIntersection tfields ufields =
     (`evalStateT` mempty) . Foldable.sequence_ $
     Map.intersectionWith unifyChild tfields ufields
 
-unifyFlattened :: M.CompositeHasVar p => FlatComposite p -> FlatComposite p -> Infer ()
+unifyFlattened :: FlatComposite -> FlatComposite -> Infer ()
 unifyFlattened
     (FlatComposite tfields tvar)
     (FlatComposite ufields uvar) =
@@ -182,13 +180,13 @@ instance Unify Type where
     unifyGeneric (T.TVariant x)    (T.TVariant y)    =  unifyGeneric x y
     unifyGeneric t1 t2                       =  dontUnify t1 t2
 
-instance M.CompositeHasVar p => Unify (T.Composite p) where
-    unifyGeneric T.CEmpty T.CEmpty       =  pure ()
-    unifyGeneric (T.CVar u) t            =  varBind u t
-    unifyGeneric t (T.CVar u)            =  varBind u t
+instance Unify T.Row where
+    unifyGeneric T.REmpty T.REmpty       =  pure ()
+    unifyGeneric (T.RVar u) t            =  varBind u t
+    unifyGeneric t (T.RVar u)            =  varBind u t
     unifyGeneric
-        t@(T.CExtend f0 t0 r0)
-        u@(T.CExtend f1 t1 r1)
+        t@(T.RExtend f0 t0 r0)
+        u@(T.RExtend f1 t1 r1)
         | f0 == f1 =
               do
                   ((), s) <- M.listenSubst $ unifyGeneric t0 t1

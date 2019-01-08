@@ -106,12 +106,12 @@ infer deps scope val =
         M.tell $ results & M.subst %~ Subst.intersect (TV.free scope')
         pure val'
 
-data CompositeHasTag p = HasTag | DoesNotHaveTag | MayHaveTag (T.Var (T.Composite p))
+data CompositeHasTag = HasTag | DoesNotHaveTag | MayHaveTag T.RowVar
 
-hasTag :: T.Tag -> T.Composite p -> CompositeHasTag p
-hasTag _ T.CEmpty   = DoesNotHaveTag
-hasTag _ (T.CVar v) = MayHaveTag v
-hasTag tag (T.CExtend t _ r)
+hasTag :: T.Tag -> T.Row -> CompositeHasTag
+hasTag _ T.REmpty   = DoesNotHaveTag
+hasTag _ (T.RVar v) = MayHaveTag v
+hasTag tag (T.RExtend t _ r)
     | tag == t  = HasTag
     | otherwise = hasTag tag r
 
@@ -144,8 +144,8 @@ inferLeaf globals leaf = \_go locals ->
             Just s -> Scheme.instantiate (Scope.skolems locals) s
             Nothing -> M.throwError $ Err.UnboundVariable n
     V.LLiteral (V.PrimVal p _) -> pure $ T.TInst p Map.empty
-    V.LRecEmpty -> pure $ T.TRecord T.CEmpty
-    V.LAbsurd -> freshInferredVar locals "a" <&> T.TFun (T.TVariant T.CEmpty)
+    V.LRecEmpty -> pure $ T.TRecord T.REmpty
+    V.LAbsurd -> freshInferredVar locals "a" <&> T.TFun (T.TVariant T.REmpty)
     <&> (,) (V.BLeaf leaf)
 
 {-# INLINE inferAbs #-}
@@ -181,11 +181,11 @@ inferGetField (V.GetField e name) = \go locals ->
         (p1_t, e') <- go locals e
         p1_tv <- freshInferredVar locals "a"
         p1_tvRecName <- freshInferredVarName locals "r"
-        M.tellRecordConstraint p1_tvRecName name
+        M.tellRowConstraint p1_tvRecName name
 
         ((), p2_s) <-
             M.listenSubst $ unifyUnsafe p1_t $
-            T.TRecord $ T.CExtend name p1_tv $ TV.lift p1_tvRecName
+            T.TRecord $ T.RExtend name p1_tv $ TV.lift p1_tvRecName
         let p2_tv = Subst.apply p2_s p1_tv
         pure (V.BGetField (V.GetField e' name), p2_tv)
 
@@ -195,10 +195,10 @@ inferInject (V.Inject name e) = \go locals ->
     do
         (t, e') <- go locals e
         tvVariantName <- freshInferredVarName locals "s"
-        M.tellVariantConstraint tvVariantName name
+        M.tellRowConstraint tvVariantName name
         pure
             ( V.BInject (V.Inject name e')
-            , T.TVariant $ T.CExtend name t $ TV.lift tvVariantName
+            , T.TVariant $ T.RExtend name t $ TV.lift tvVariantName
             )
 
 {-# INLINE inferCase #-}
@@ -224,7 +224,7 @@ inferCase (V.Case name m mm) = \go locals ->
         -- p3
         -- new variant type var "s":
         tvVariantName <- freshInferredVarName locals "s"
-        M.tellVariantConstraint tvVariantName name
+        M.tellRowConstraint tvVariantName name
         let p3_tvVariant = TV.lift tvVariantName
         -- type(mismatch) `unify` [ s ]->res
         ((), p4_s) <-
@@ -238,7 +238,7 @@ inferCase (V.Case name m mm) = \go locals ->
         -- p4
         pure
             ( V.BCase (V.Case name m' mm')
-            , T.TFun (T.TVariant (T.CExtend name p4_tv p4_tvVariant)) p4_tvRes
+            , T.TFun (T.TVariant (T.RExtend name p4_tv p4_tvVariant)) p4_tvRes
             )
 
 {-# INLINE inferRecExtend #-}
@@ -257,17 +257,17 @@ inferRecExtend (V.RecExtend name e1 e2) = \go locals ->
                 case hasTag name x of
                 HasTag -> M.throwError $ Err.DuplicateField name x
                 DoesNotHaveTag -> pure x
-                MayHaveTag var -> x <$ M.tellRecordConstraint var name
+                MayHaveTag var -> x <$ M.tellRowConstraint var name
             _ -> do
                 tv <- freshInferredVarName locals "r"
-                M.tellRecordConstraint tv name
+                M.tellRowConstraint tv name
                 let tve = TV.lift tv
                 ((), s) <- M.listenSubst $ unifyUnsafe t2 $ T.TRecord tve
                 pure $ Subst.apply s tve
         let t1' = Subst.apply s3 $ Subst.apply s2 t1
         pure
             ( V.BRecExtend (V.RecExtend name e1' e2')
-            , T.TRecord $ T.CExtend name t1' rest
+            , T.TRecord $ T.RExtend name t1' rest
             )
 
 getNominal :: Map T.NominalId Nominal -> T.NominalId -> M.Infer Nominal

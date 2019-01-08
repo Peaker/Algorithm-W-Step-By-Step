@@ -11,8 +11,7 @@ import           Text.PrettyPrint ((<+>), Doc)
 import           Text.PrettyPrint.HughesPJClass (Pretty(..))
 
 data Error
-    = DuplicateField T.Tag T.Record
-    | DuplicateAlt T.Tag T.Variant
+    = DuplicateField T.Tag T.Row
     | AccessOpaqueNominal T.NominalId
     | MissingNominal T.NominalId
     | OccursCheckFail Doc Doc
@@ -25,9 +24,7 @@ data Error
 
 instance Pretty Error where
     pPrint (DuplicateField t r) =
-        "Field" <+> pPrint t <+> "forbidden in record" <+> pPrint r
-    pPrint (DuplicateAlt t r) =
-        "Alternative" <+> pPrint t <+> "forbidden in variant" <+> pPrint r
+        "Field" <+> pPrint t <+> "forbidden in row" <+> pPrint r
     pPrint (MissingNominal i) =
         "Missing nominal:" <+> pPrint i
     pPrint (AccessOpaqueNominal i) =

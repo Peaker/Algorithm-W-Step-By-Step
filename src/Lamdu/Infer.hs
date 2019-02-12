@@ -14,6 +14,7 @@ module Lamdu.Infer
     ) where
 
 import           AST (Tree, Ann(..), annotations)
+import           AST.Term.Row (RowExtend(..))
 import           Control.DeepSeq (NFData(..))
 import qualified Control.Lens as Lens
 import           Control.Lens.Operators
@@ -202,8 +203,8 @@ inferInject (V.Inject name e) = \go locals ->
             )
 
 {-# INLINE inferCase #-}
-inferCase :: V.Case a -> InferHandler a b
-inferCase (V.Case name m mm) = \go locals ->
+inferCase :: Tree (RowExtend T.Tag V.Term V.Term) (Ann a) -> InferHandler (Val a) b
+inferCase (RowExtend name m mm) = \go locals ->
     do
         ((p1_tm, m'), p1_s) <- M.listenSubst $ go locals m
         let p1 = Subst.apply p1_s
@@ -237,13 +238,13 @@ inferCase (V.Case name m mm) = \go locals ->
             p4_tv        = p4 p3_tv
         -- p4
         pure
-            ( V.BCase (V.Case name m' mm')
+            ( V.BCase (RowExtend name m' mm')
             , T.TFun (T.TVariant (T.RExtend name p4_tv p4_tvVariant)) p4_tvRes
             )
 
 {-# INLINE inferRecExtend #-}
-inferRecExtend :: V.RecExtend a -> InferHandler a b
-inferRecExtend (V.RecExtend name e1 e2) = \go locals ->
+inferRecExtend :: Tree (RowExtend T.Tag V.Term V.Term) (Ann a) -> InferHandler (Val a) b
+inferRecExtend (RowExtend name e1 e2) = \go locals ->
     do
         ((t1, e1'), s1) <- M.listenSubst $ go locals e1
         ((t2, e2'), s2) <- M.listenSubst $ go (Subst.apply s1 locals) e2
@@ -266,7 +267,7 @@ inferRecExtend (V.RecExtend name e1 e2) = \go locals ->
                 pure $ Subst.apply s tve
         let t1' = Subst.apply s3 $ Subst.apply s2 t1
         pure
-            ( V.BRecExtend (V.RecExtend name e1' e2')
+            ( V.BRecExtend (RowExtend name e1' e2')
             , T.TRecord $ T.RExtend name t1' rest
             )
 

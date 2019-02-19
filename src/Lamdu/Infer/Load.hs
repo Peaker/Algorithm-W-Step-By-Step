@@ -17,7 +17,7 @@ import           Lamdu.Calc.Term (Val)
 import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
-import           Lamdu.Calc.Type.Nominal (Nominal, nomParams, nomType, _NominalType)
+import           Lamdu.Calc.Type.Nominal (Nominal, nomParams, nomType)
 import           Lamdu.Calc.Type.Scheme (Scheme, schemeType)
 import           Lamdu.Infer (Scope, Infer, infer, Payload, Dependencies(..), scopeToTypeMap)
 
@@ -52,7 +52,7 @@ validateType loader nominals typ =
 
 validateLoaded :: Monad m => Loader m -> Dependencies -> m ()
 validateLoaded loader (Deps types nominals) =
-    (nominals ^.. Lens.folded . nomType . _NominalType . schemeType) ++
+    (nominals ^.. Lens.folded . nomType . schemeType) ++
     (types ^.. Lens.folded . schemeType)
     & traverse_ (validateType loader nominals)
 

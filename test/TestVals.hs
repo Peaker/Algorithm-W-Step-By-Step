@@ -10,7 +10,7 @@ module TestVals
     , infixArgs
     , eLet
     , litInt, intType
-    , stTypePair, listTypePair, boolTypePair, polySTPair, polyIdTypePair, unsafeCoerceTypePair
+    , listTypePair, boolTypePair, polySTPair, polyIdTypePair, unsafeCoerceTypePair
     , ignoredParamTypePair
     , xGetterPair, xGetterPairConstrained
     ) where
@@ -30,7 +30,7 @@ import           Lamdu.Calc.Type (Type, (~>))
 import qualified Lamdu.Calc.Type as T
 import           Lamdu.Calc.Type.Constraints (Constraints(..))
 import qualified Lamdu.Calc.Type.Constraints as Constraints
-import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..))
+import           Lamdu.Calc.Type.Nominal (Nominal(..))
 import           Lamdu.Calc.Type.Scheme (Scheme(..))
 import qualified Lamdu.Calc.Type.Scheme as Scheme
 import qualified Lamdu.Calc.Type.Vars as TV
@@ -59,17 +59,8 @@ forAll :: [T.TypeVar] -> ([Type] -> Type) -> Scheme
 forAll tvs mkType =
     Scheme mempty { typeVars = Set.fromList tvs } mempty $ mkType $ map T.TVar tvs
 
-stTypePair :: (T.NominalId, Nominal)
-stTypePair =
-    ( "ST"
-    , Nominal
-        { _nomParams = Map.fromList [("res", "A"), ("s", "S")]
-        , _nomType = OpaqueNominal
-        }
-    )
-
 stOf :: Type -> Type -> Type
-stOf s a = T.TInst (fst stTypePair) $ Map.fromList [("res", a), ("s", s)]
+stOf s a = T.TInst "ST" $ Map.fromList [("res", a), ("s", s)]
 
 listTypePair :: (T.NominalId, Nominal)
 listTypePair =
@@ -82,7 +73,6 @@ listTypePair =
             & T.RExtend ":" (recordType [("head", tv), ("tail", listOf tv)])
             & T.TVariant
             & Scheme.mono
-            & NominalType
         }
     )
     where
@@ -109,7 +99,6 @@ boolTypePair =
             & T.RExtend "False" (recordType [])
             & T.TVariant
             & Scheme.mono
-            & NominalType
         }
     )
 
@@ -130,9 +119,7 @@ polyIdTypePair =
     ( "PolyIdentity"
     , Nominal
         { _nomParams = Map.empty
-        , _nomType =
-            NominalType $ Scheme (TV.singleton tvA) mempty $
-            ta ~> ta
+        , _nomType = Scheme (TV.singleton tvA) mempty (ta ~> ta)
         }
     )
 
@@ -142,8 +129,8 @@ polySTPair =
     , Nominal
       { _nomParams = Map.singleton "res" tvA
       , _nomType =
-          NominalType $ Scheme (TV.singleton tvS) mempty $
-          T.TInst (fst stTypePair) $ Map.fromList
+          Scheme (TV.singleton tvS) mempty $
+          T.TInst "ST" $ Map.fromList
           [ ("s", T.TVar tvS)
           , ("res", T.TVar tvRes)
           ]
@@ -161,8 +148,7 @@ unsafeCoerceTypePair =
     , Nominal
         { _nomParams = Map.empty
         , _nomType =
-            NominalType $ Scheme (TV.singleton tvA <> TV.singleton tvB) mempty $
-            ta ~> tb
+            Scheme (TV.singleton tvA <> TV.singleton tvB) mempty (ta ~> tb)
         }
     )
 
@@ -172,8 +158,7 @@ ignoredParamTypePair =
     , Nominal
         { _nomParams = Map.singleton "res" tvB
         , _nomType =
-            NominalType $ Scheme (TV.singleton tvA) mempty $
-            ta ~> tb
+            Scheme (TV.singleton tvA) mempty (ta ~> tb)
         }
     )
 
@@ -182,7 +167,7 @@ xGetter constraints =
     Nominal
     { _nomParams = Map.empty
     , _nomType =
-        NominalType $ Scheme (TV.singleton tvA <> TV.singleton tvRest) (constraints tvRest) $
+        Scheme (TV.singleton tvA <> TV.singleton tvRest) (constraints tvRest) $
         openRecordType tvRest [("x", ta)] ~> ta
     }
     where
@@ -259,8 +244,7 @@ env =
         ]
     , _depsNominals =
         Map.fromList
-        [ stTypePair
-        , listTypePair
+        [ listTypePair
         , boolTypePair
         , polyIdTypePair
         , polySTPair

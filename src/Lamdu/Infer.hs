@@ -31,7 +31,7 @@ import           Lamdu.Calc.Term (Val)
 import qualified Lamdu.Calc.Term as V
 import           Lamdu.Calc.Type (Type)
 import qualified Lamdu.Calc.Type as T
-import           Lamdu.Calc.Type.Nominal (Nominal(..), NominalType(..), _NominalType, nomParams, nomType)
+import           Lamdu.Calc.Type.Nominal (Nominal(..), nomParams, nomType)
 import           Lamdu.Calc.Type.Scheme (Scheme)
 import           Lamdu.Calc.Type.Vars (TypeVars(..))
 import qualified Lamdu.Calc.Type.Vars as TV
@@ -84,7 +84,7 @@ depSchemes :: Lens.Traversal' Dependencies Scheme
 depSchemes f (Deps globals nominals) =
     Deps
     <$> traverse f globals
-    <*> (traverse . nomType . _NominalType) f nominals
+    <*> (traverse . nomType) f nominals
 
 inferSubst :: Dependencies -> Scope -> Val a -> Infer (Scope, Val (Payload, a))
 inferSubst deps rootScope val =
@@ -279,9 +279,9 @@ getNominal nominals name =
     Just nominal -> pure nominal
 
 -- errorizes if the map mismatches the map in the Nominal
-applyNominal :: Map T.ParamId Type -> Nominal -> NominalType
+applyNominal :: Map T.ParamId Type -> Nominal -> Scheme
 applyNominal m (Nominal params scheme) =
-    scheme & _NominalType %~ Subst.apply subst
+    Subst.apply subst scheme
     where
         subst = mempty { Subst.substTypes = Map.mapKeys (`find` params) m }
         find k =
@@ -296,9 +296,7 @@ nomTypes outerSkolemsScope nominals name =
             nominal ^. nomParams
             & Map.keysSet & Map.fromSet (const (M.freshInferredVar outerSkolemsScope "n"))
             & sequenceA
-        case applyNominal p1_paramVals nominal of
-            OpaqueNominal -> Err.AccessOpaqueNominal name & M.throwError
-            NominalType scheme -> pure (T.TInst name p1_paramVals, scheme)
+        pure (T.TInst name p1_paramVals, applyNominal p1_paramVals nominal)
 
 {-# INLINE inferFromNom #-}
 inferFromNom :: Map T.NominalId Nominal -> V.Nom a -> InferHandler a b

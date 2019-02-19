@@ -14,6 +14,7 @@ module Lamdu.Infer
     ) where
 
 import           AST (Tree, Ann(..), annotations)
+import           AST.Term.Nominal (ToNom(..))
 import           AST.Term.Row (RowExtend(..))
 import           Control.DeepSeq (NFData(..))
 import qualified Control.Lens as Lens
@@ -315,8 +316,8 @@ inferFromNom nominals (V.Nom name val) = \go locals ->
             )
 
 {-# INLINE inferToNom #-}
-inferToNom :: Map T.NominalId Nominal -> V.Nom a -> InferHandler a b
-inferToNom nominals (V.Nom name val) = \go locals ->
+inferToNom :: Map T.NominalId Nominal -> Tree (ToNom T.NominalId V.Term) k -> InferHandler (Tree k V.Term) a
+inferToNom nominals (ToNom name val) = \go locals ->
     do
         (p1_outerType, p1_innerScheme) <- nomTypes (Scope.skolems locals) nominals name
         ((skolemRenames, p1_innerType), instantiateResults) <-
@@ -327,7 +328,7 @@ inferToNom nominals (V.Nom name val) = \go locals ->
         ((), p2_s) <- M.listenSubst $ unifyUnsafe p1_t p1_innerType
         let p2_outerType = Subst.apply p2_s p1_outerType
         pure
-            ( V.BToNom (V.Nom name val')
+            ( V.BToNom (ToNom name val')
             , p2_outerType
             )
 

@@ -13,3 +13,4 @@
 *.i_o
 .stack-work
 /ghci-out/
+.vscode/

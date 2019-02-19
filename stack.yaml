@@ -3,11 +3,11 @@ packages:
 - '.'
 - location:
     git: https://github.com/lamdu/lamdu-calculus
-    commit: dda84aed798a107ceccb12729fe4a0e95790455f
+    commit: c40ab92fd00f3a8c31f98de308b0409fc8c036f0
   extra-dep: True
 - location:
     git: https://github.com/lamdu/syntax-tree
-    commit: 6c4a01cfbc05e6c5cdff75a6136e5f9c71a6c315
+    commit: fd06418f586b53ba45dff88d2927b387f9ab5141
   extra-dep: True
 extra-deps: []
 flags: {}

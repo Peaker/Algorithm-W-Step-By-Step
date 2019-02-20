@@ -114,8 +114,8 @@ exps =
 
     , P.toNom (fst ignoredParamTypePair) (P.lambda "x" id)
 
-    , P.toNom (fst unsafeCoerceTypePair) (P.fromNom (fst polyIdTypePair) P.hole)
-    , P.toNom (fst polyIdTypePair) (P.fromNom (fst unsafeCoerceTypePair) P.hole)
+    , P.toNom (fst unsafeCoerceTypePair) (P.fromNom (fst polyIdTypePair) $$ P.hole)
+    , P.toNom (fst polyIdTypePair) (P.fromNom (fst unsafeCoerceTypePair) $$ P.hole)
 
     , P.toNom (fst polyIdTypePair) (P.var "plus1")
     , P.lambda "a" $ \a -> P.toNom (fst polyIdTypePair) (P.lambda "_" $ \_ -> a)
@@ -132,7 +132,7 @@ nullTest =
     P.lambda "list" $ \l ->
     P._case "[]" (P.lambda "_" (const (P.var "True")))
     (P._case ":" (P.lambda "_" (const (P.var "False"))) P.absurd)
-    $$ P.fromNom (fst listTypePair) l
+    $$ (P.fromNom (fst listTypePair) $$ l)
 
 unifies :: [(Type, Type)]
 unifies =

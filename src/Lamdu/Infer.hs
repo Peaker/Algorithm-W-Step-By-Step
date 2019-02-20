@@ -3,7 +3,7 @@ module Lamdu.Infer
     ( makeScheme
     , TypeVars(..)
     , Dependencies(..), depsGlobalTypes, depsNominals, depSchemes
-    , infer, inferFromNom
+    , infer, inferFromNom, inferApply
     , Scope, emptyScope, Scope.scopeToTypeMap, Scope.insertTypeOf, Scope.skolems, Scope.skolemScopeVars
     , Payload(..), plScope, plType
     , M.Context, M.initialContext
@@ -134,20 +134,21 @@ freshInferredVarName = M.freshInferredVarName . Scope.skolems
 {-# ANN module ("HLint: ignore Redundant lambda" :: String) #-}
 
 {-# INLINE inferLeaf #-}
-inferLeaf :: Map V.Var Scheme -> V.Leaf -> InferHandler a b
-inferLeaf globals leaf = \_go locals ->
+inferLeaf :: Dependencies -> V.Leaf -> InferHandler a b
+inferLeaf deps leaf = \_go locals ->
     case leaf of
     V.LHole -> freshInferredVar locals "h"
     V.LVar n ->
         case Scope.lookupTypeOf n locals of
         Just t -> pure t
         Nothing ->
-            case Map.lookup n globals of
+            case Map.lookup n (deps ^. depsGlobalTypes) of
             Just s -> Scheme.instantiate (Scope.skolems locals) s
             Nothing -> M.throwError $ Err.UnboundVariable n
     V.LLiteral (V.PrimVal p _) -> pure $ T.TInst p Map.empty
     V.LRecEmpty -> pure $ T.TRecord T.REmpty
     V.LAbsurd -> freshInferredVar locals "a" <&> T.TFun (T.TVariant T.REmpty)
+    V.LFromNom n -> inferFromNom (deps ^. depsNominals) n locals
     <&> (,) (V.BLeaf leaf)
 
 {-# INLINE inferAbs #-}
@@ -299,19 +300,15 @@ nomTypes outerSkolemsScope nominals name =
         pure (T.TInst name p1_paramVals, applyNominal p1_paramVals nominal)
 
 {-# INLINE inferFromNom #-}
-inferFromNom :: Map T.NominalId Nominal -> V.Nom a -> InferHandler a b
-inferFromNom nominals (V.Nom name val) = \go locals ->
+inferFromNom ::
+    Map T.NominalId Nominal -> T.NominalId -> Scope ->
+    M.InferCtx (Either Err.Error) Type
+inferFromNom nominals n locals =
     do
-        (p1_t, val') <- go locals val
-        (p1_outerType, p1_innerScheme) <-
-            nomTypes (Scope.skolems locals) nominals name
-        p1_innerType <- Scheme.instantiate (Scope.skolems locals) p1_innerScheme
-        ((), p2_s) <- M.listenSubst $ unifyUnsafe p1_t p1_outerType
-        let p2_innerType = Subst.apply p2_s p1_innerType
-        pure
-            ( V.BFromNom (V.Nom name val')
-            , p2_innerType
-            )
+        (outerType, innerScheme) <-
+            nomTypes (Scope.skolems locals) nominals n
+        innerType <- Scheme.instantiate (Scope.skolems locals) innerScheme
+        T.TFun outerType innerType & pure
 
 {-# INLINE inferToNom #-}
 inferToNom :: Map T.NominalId Nominal -> Tree (ToNom T.NominalId V.Term) k -> InferHandler (Tree k V.Term) a
@@ -338,14 +335,13 @@ inferInternal f deps =
     where
         go locals (Ann pl body) =
             ( case body of
-              V.BLeaf leaf -> inferLeaf (deps ^. depsGlobalTypes) leaf
+              V.BLeaf leaf -> inferLeaf deps leaf
               V.BLam lam -> inferAbs lam
               V.BApp app -> inferApply app
               V.BGetField getField -> inferGetField getField
               V.BInject inject -> inferInject inject
               V.BCase case_ -> inferCase case_
               V.BRecExtend recExtend -> inferRecExtend recExtend
-              V.BFromNom nom -> inferFromNom (deps ^. depsNominals) nom
               V.BToNom nom -> inferToNom (deps ^. depsNominals) nom
             ) go locals
             <&> \(body', typ) -> (typ, Ann (f typ locals pl) body')

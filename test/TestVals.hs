@@ -363,7 +363,7 @@ factorsVal =
         if_ b t f =
             nullaryCase "False" f
             (nullaryCase "True" t P.absurd)
-            $$ P.fromNom "Bool" b
+            $$ (P.fromNom "Bool" $$ b)
         nullaryCase tag handler = P._case tag (defer handler)
         defer = P.lambda "_" . const
         (%>) = inf ">"
